@@ -76,12 +76,12 @@ const mockMenus: { [key: string]: MenuItem[] } = {
   ],
 };
 
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params;
-  const menu = mockMenus[id];
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(request: Request, { params }: { params: { id: string } }) {
+  const url = new URL(request.url);
+  const id = url.pathname.split("/").at(-2); // extract [id] from URL
+
+  const menu = id && mockMenus[id];
 
   if (!menu || menu.length === 0) {
     return NextResponse.json({ error: "Menu not found" }, { status: 404 });
