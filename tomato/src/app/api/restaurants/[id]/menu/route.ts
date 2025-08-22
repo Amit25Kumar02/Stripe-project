@@ -76,14 +76,14 @@ const mockMenus: { [key: string]: MenuItem[] } = {
   ],
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const url = new URL(request.url);
-  const id = url.pathname.split("/").at(-2); // extract [id] from URL
+export async function GET(
+  req: Request,
+  context: { params: { id: string } } // ✅ correct type for App Router
+) {
+  const { id } = context.params;
+  const menu = mockMenus[id];
 
-  const menu = id && mockMenus[id];
-
-  if (!menu || menu.length === 0) {
+  if (!menu) {
     return NextResponse.json({ error: "Menu not found" }, { status: 404 });
   }
 
