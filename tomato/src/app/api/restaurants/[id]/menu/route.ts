@@ -8,7 +8,7 @@ interface MenuItem {
 
 // Dummy menus
 const mockMenus: { [key: string]: MenuItem[] } = {
-res1: [
+  res1: [
     { id: "m1", name: "Paneer Tikka", price: 20 },
     { id: "m2", name: "Veg Hakka Noodles", price: 18 },
     { id: "m3", name: "Mushroom Manchurian", price: 22 },
@@ -78,13 +78,12 @@ res1: [
 
 export async function GET(
   req: Request,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = context.params;
-
+  const { id } = params;
   const menu = mockMenus[id];
 
-  if (!menu) {
+  if (!menu || menu.length === 0) {
     return NextResponse.json({ error: "Menu not found" }, { status: 404 });
   }
 
