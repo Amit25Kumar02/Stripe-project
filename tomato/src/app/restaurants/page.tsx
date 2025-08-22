@@ -112,9 +112,8 @@ export default function RestaurantsPage() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-lg p-6 transform ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 transition-transform z-40`}
+        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-lg p-6 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0 transition-transform z-40`}
       >
         <h2 className="text-2xl font-bold justify-center flex items-center mb-6">
           Categories
@@ -134,11 +133,10 @@ export default function RestaurantsPage() {
                 // Use a button for filtering
                 <button
                   onClick={() => handleFilterClick(cat.filter!)}
-                  className={`flex items-center w-full px-3 py-2 rounded transition ${
-                    activeFilter === cat.filter
+                  className={`flex items-center w-full px-3 py-2 rounded transition ${activeFilter === cat.filter
                       ? 'bg-blue-100 text-blue-600 font-semibold'
                       : 'hover:bg-blue-50 hover:text-blue-600'
-                  }`}
+                    }`}
                 >
                   <span className="mr-2">{cat.icon}</span>
                   {cat.name}
@@ -244,9 +242,12 @@ export default function RestaurantsPage() {
                     <p className="text-gray-500 text-sm mb-4">
                       Cuisine: {restaurant.cuisine}
                     </p>
-                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-300 ease-in-out">
-                      View Menu
-                    </button>
+                    <NextLink href={`/restaurants/${restaurant.id}`}>
+                      <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-300 ease-in-out">
+                        View Menu
+                      </button>
+                    </NextLink>
+
                   </div>
                 </div>
               ))

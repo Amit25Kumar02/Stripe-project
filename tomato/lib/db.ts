@@ -1,34 +1,23 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import mongoose from 'mongoose';
+import { MongoClient, Db } from "mongodb";
 
-const MONGODB_URI = process.env.MONGODB_URI as string;
+const uri = process.env.MONGODB_URI as string; // put your URI in .env.local
+const options = {};
 
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+let client: MongoClient;
+let db: Db;
+
+if (!process.env.MONGODB_URI) {
+  throw new Error("Please add your Mongo URI to .env.local");
 }
 
-let cached = (global as any).mongoose;
+export async function connectToDatabase(): Promise<Db> {
+  if (db) return db;
 
-if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null };
-}
-
-async function dbConnect() {
-  if (cached.conn) {
-    return cached.conn;
+  if (!client) {
+    client = new MongoClient(uri, options);
+    await client.connect();
   }
 
-  if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
-
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      return mongoose;
-    });
-  }
-  cached.conn = await cached.promise;
-  return cached.conn;
+  db = client.db("tomato"); // 👈 replace with your DB name
+  return db;
 }
-
-export default dbConnect;

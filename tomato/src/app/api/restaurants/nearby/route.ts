@@ -2,8 +2,20 @@
 
 import { NextResponse } from 'next/server';
 
+interface Restaurant {
+  id: string;
+  name: string;
+  cuisine: string;
+  rating: number;
+  priceRange: string;
+  address: string;
+  imageUrl: string;
+  latitude: number;
+  longitude: number;
+}
+
 // Mock data for restaurants in Hisar, Haryana
-const mockRestaurants = [
+const mockRestaurants: Restaurant[] = [
   {
     id: 'res1',
     name: 'Sky Garden Hisar',
@@ -86,5 +98,5 @@ export async function GET(request: Request) {
   );
 
   // For now return the mock list (later you can filter by lat/lon)
-  return NextResponse.json(mockRestaurants);
+  return NextResponse.json(q ? filteredRestaurants : mockRestaurants);
 }
