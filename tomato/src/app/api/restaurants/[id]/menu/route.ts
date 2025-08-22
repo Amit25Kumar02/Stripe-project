@@ -77,10 +77,10 @@ const mockMenus: { [key: string]: MenuItem[] } = {
 };
 
 export async function GET(
-  req: Request,
-  context: { params: { id: string } } // ✅ correct type for App Router
+  request: Request,
+  { params }: { params: { id: string } }
 ) {
-  const { id } = context.params;
+  const { id } = params;
   const menu = mockMenus[id];
 
   if (!menu) {
