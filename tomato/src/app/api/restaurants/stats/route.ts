@@ -3,8 +3,7 @@
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  // In a real application, this would fetch aggregation data from your DB,
-  // e.g., average rating, most popular cuisine, total restaurants.
+
   const stats = {
     totalRestaurants: 150,
     averageRating: 4.3,

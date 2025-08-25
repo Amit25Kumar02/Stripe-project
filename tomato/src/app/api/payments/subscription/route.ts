@@ -2,16 +2,35 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 
-export async function POST() {
+interface RequestBody {
+  plan?: "basic" | "premium"; // plan selected by user
+}
+
+export async function POST(req: Request) {
   try {
-    console.log("Creating subscription checkout with Price ID:", process.env.STRIPE_PRICE_ID);
+    const body: RequestBody = await req.json();
+    const plan = body.plan || "basic";
+
+    // Map plan to Stripe Price IDs (set these in .env)
+    const priceIdMap: Record<string, string> = {
+      basic: process.env.STRIPE_PRICE_ID!,
+      premium: process.env.STRIPE_PRICE_ID_PREMIUM!,
+    };
+
+    const priceId = priceIdMap[plan];
+
+    if (!priceId) {
+      throw new Error(`Price ID not configured for plan: ${plan}`);
+    }
+
+    console.log(`Creating subscription checkout for plan: ${plan}, Price ID: ${priceId}`);
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID!, // ✅ safe here
+          price: priceId,
           quantity: 1,
         },
       ],

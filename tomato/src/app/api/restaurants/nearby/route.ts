@@ -14,7 +14,6 @@ interface Restaurant {
   longitude: number;
 }
 
-// Mock data for restaurants in Hisar, Haryana
 const mockRestaurants: Restaurant[] = [
   {
     id: 'res1',

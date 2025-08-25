@@ -14,12 +14,12 @@ export default function Home() {
   ];
 
   const dummyItems = [
-    { name: '🍕 Pepperoni Pizza', desc: 'Hot & cheesy', bg: 'bg-red-500' },
-    { name: '🍔 Classic Burger', desc: 'Juicy & fresh', bg: 'bg-yellow-400' },
-    { name: '🥗 Healthy Salad', desc: 'Fresh veggies', bg: 'bg-green-400' },
-    { name: '🍣 Sushi Platter', desc: 'Ocean fresh', bg: 'bg-blue-400' },
-    { name: '🌮 Tacos Fiesta', desc: 'Spicy & tangy', bg: 'bg-pink-500' },
-    { name: '🍩 Donut Treat', desc: 'Sweet delight', bg: 'bg-purple-400' },
+    { name: '🍕 Pepperoni Pizza', desc: 'Hot & cheesy' },
+    { name: '🍔 Classic Burger', desc: 'Juicy & fresh'},
+    { name: '🥗 Healthy Salad', desc: 'Fresh veggies' },
+    { name: '🍣 Sushi Platter', desc: 'Ocean fresh'},
+    { name: '🌮 Tacos Fiesta', desc: 'Spicy & tangy'},
+    { name: '🍩 Donut Treat', desc: 'Sweet delight'},
   ];
 
   return (
@@ -98,11 +98,11 @@ export default function Home() {
           {dummyItems.map((item, idx) => (
             <div
               key={idx}
-              className={`flex flex-col justify-between p-6 rounded-2xl shadow-xl ${item.bg} text-white transform transition-transform hover:scale-105`}
+              className={`flex flex-col bg-white justify-between p-6 rounded-2xl shadow-xl transform transition-transform hover:scale-105`}
             >
               <div>
                 <h2 className="text-2xl font-bold">{item.name}</h2>
-                <p className="text-white/90">{item.desc}</p>
+                <p className="text-gray-400">{item.desc}</p>
               </div>
               <div className="text-5xl text-right mt-4">{item.name.slice(0, 2)}</div>
             </div>
