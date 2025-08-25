@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -177,15 +177,24 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
   );
 };
 
-export default function CheckoutPage() {
+// Create a separate component that uses useSearchParams
+function CheckoutContent() {
   const searchParams = useSearchParams();
   const amount = Number(searchParams.get("amount")) || 0;
 
   return (
+    <Elements stripe={stripePromise}>
+      <CheckoutFormComponent amount={amount} />
+    </Elements>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 flex flex-col items-center justify-center p-4">
-      <Elements stripe={stripePromise}>
-        <CheckoutFormComponent amount={amount} />
-      </Elements>
+      <Suspense fallback={<div className="text-center">Loading checkout...</div>}>
+        <CheckoutContent />
+      </Suspense>
     </div>
   );
 }

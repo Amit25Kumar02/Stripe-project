@@ -78,9 +78,10 @@ const mockMenus: { [key: string]: MenuItem[] } = {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  // Await the params to resolve the Promise
+  const { id } = await params;
   const menu = mockMenus[id];
 
   if (!menu) {

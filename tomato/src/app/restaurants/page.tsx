@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
 import Image from 'next/image';
-import Map from '../components/map';
 import {
   MapPin,
   Star,
@@ -18,6 +17,9 @@ import {
 } from 'lucide-react';
 import NextLink from 'next/link';
 import axios from 'axios';
+
+// Dynamically import Map component (will only load on client side)
+const Map = lazy(() => import('../components/map'));
 
 interface Restaurant {
   id: string;
@@ -43,6 +45,33 @@ const categories = [
   { name: 'Multi-Cuisine', filter: 'multi-cuisine', icon: <ChevronRight size={20} /> },
 ];
 
+// Create a wrapper component that conditionally renders the Map
+function MapWrapper({ restaurants }: { restaurants: Restaurant[] }) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="flex items-center justify-center h-full bg-gray-100 rounded-xl">
+        <p className="text-gray-500">Loading map...</p>
+      </div>
+    );
+  }
+
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-full bg-gray-100 rounded-xl">
+        <p className="text-gray-500">Loading map...</p>
+      </div>
+    }>
+      <Map restaurants={restaurants} />
+    </Suspense>
+  );
+}
+
 export default function RestaurantsPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,6 +79,12 @@ export default function RestaurantsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted to true after component mounts (client-side only)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchRestaurants = async (query?: string, filter?: string) => {
     try {
@@ -60,15 +95,11 @@ export default function RestaurantsPage() {
         params: { q: query, filter: filter },
       });
 
-      // Instead of relying on client-side filtering, fetch the filtered data from the API
-      // The API route would need to be updated to handle the 'filter' parameter
       let filteredData = response.data;
       if (filter && filter !== 'all') {
         if (filter === 'popular') {
           filteredData = filteredData.filter(r => r.rating >= 4.5);
         } else if (filter === 'new') {
-          // Assuming your new restaurants have a specific ID format or property
-          // This is just a placeholder example. You'd need a real rule.
           filteredData = filteredData.filter(r => r.id.startsWith('res'));
         } else {
           filteredData = filteredData.filter(r => r.cuisine.toLowerCase().includes(filter));
@@ -84,8 +115,10 @@ export default function RestaurantsPage() {
   };
 
   useEffect(() => {
-    fetchRestaurants(searchQuery, activeFilter);
-  }, [searchQuery, activeFilter]);
+    if (mounted) {
+      fetchRestaurants(searchQuery, activeFilter);
+    }
+  }, [searchQuery, activeFilter, mounted]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,7 +155,6 @@ export default function RestaurantsPage() {
           {categories.map((cat) => (
             <li key={cat.name}>
               {cat.href ? (
-                // Use Next.js Link for navigation
                 <NextLink href={cat.href} passHref>
                   <span className="flex items-center w-full px-3 py-2 rounded transition hover:bg-blue-50 hover:text-blue-600 cursor-pointer">
                     <span className="mr-2">{cat.icon}</span>
@@ -130,7 +162,6 @@ export default function RestaurantsPage() {
                   </span>
                 </NextLink>
               ) : (
-                // Use a button for filtering
                 <button
                   onClick={() => handleFilterClick(cat.filter!)}
                   className={`flex items-center w-full px-3 py-2 rounded transition ${activeFilter === cat.filter
@@ -183,10 +214,10 @@ export default function RestaurantsPage() {
           )}
           {error && <p className="text-center text-red-600">{error}</p>}
 
-          {/* Map */}
+          {/* Map - Only render on client side */}
           {!loading && restaurants.length > 0 && (
             <div className="mb-8 h-96 w-full rounded-xl shadow-lg overflow-hidden border border-gray-200 bg-white">
-              <Map restaurants={restaurants} />
+              <MapWrapper restaurants={restaurants} />
             </div>
           )}
 
@@ -247,7 +278,6 @@ export default function RestaurantsPage() {
                         View Menu
                       </button>
                     </NextLink>
-
                   </div>
                 </div>
               ))
