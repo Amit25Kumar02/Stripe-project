@@ -80,7 +80,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // Await the params to resolve the Promise
+  
   const { id } = await params;
   const menu = mockMenus[id];
 
