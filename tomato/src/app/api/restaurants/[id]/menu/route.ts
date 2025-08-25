@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 interface MenuItem {
   id: string;
@@ -77,7 +77,7 @@ const mockMenus: { [key: string]: MenuItem[] } = {
 };
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   const { id } = params;
