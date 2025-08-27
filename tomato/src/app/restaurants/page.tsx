@@ -17,6 +17,7 @@ import {
   HomeIcon,
   LocateFixed,
   Focus,
+  Compass,
 } from 'lucide-react';
 import NextLink from 'next/link';
 import axios from 'axios';
@@ -99,6 +100,29 @@ const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 };
 
+// New function to calculate bearing/direction
+const getDirection = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const toDeg = (x: number) => (x * 180) / Math.PI;
+
+  const lat1Rad = toRad(lat1);
+  const lon1Rad = toRad(lon1);
+  const lat2Rad = toRad(lat2);
+  const lon2Rad = toRad(lon2);
+
+  const dLon = lon2Rad - lon1Rad;
+
+  const y = Math.sin(dLon) * Math.cos(lat2Rad);
+  const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+
+  let brng = toDeg(Math.atan2(y, x));
+  brng = (brng + 360) % 360;
+
+  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  const index = Math.round(brng / 45) % 8;
+  return directions[index];
+};
+
 export default function RestaurantsPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(false);
@@ -151,7 +175,7 @@ export default function RestaurantsPage() {
       const params: { q: string, lat?: number, lon?: number } = { q: textQuery || '' };
 
       if (lat && lon) {
-          params.q = `lat:${lat},lon:${lon}`;
+        params.q = `lat:${lat},lon:${lon}`;
       }
       
       const response = await axios.get<Restaurant[]>('/api/restaurants/nearby', {
@@ -245,6 +269,14 @@ export default function RestaurantsPage() {
     setUserLocationClicked(false); // Reset this flag
   };
 
+  const getDirectionsLink = (restaurant: Restaurant) => {
+    const fromLat = userLocation?.latitude || manualMapLocation?.latitude;
+    const fromLon = userLocation?.longitude || manualMapLocation?.longitude;
+    if (!fromLat || !fromLon) return null;
+
+    return `https://www.google.com/maps/dir/?api=1&origin=${fromLat},${fromLon}&destination=${restaurant.latitude},${restaurant.longitude}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
       <button
@@ -308,12 +340,12 @@ export default function RestaurantsPage() {
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
                   <button
-              type="submit"
-              className="w-full sm:w-auto bg-blue-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-              disabled={!manualLocationQuery.trim()}
-            >
-              Search
-            </button>
+                type="submit"
+                className="w-full sm:w-auto bg-blue-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+                disabled={!manualLocationQuery.trim()}
+              >
+                Search
+              </button>
               <button
                 type="button"
                 onClick={fetchUserLocation}
@@ -331,7 +363,7 @@ export default function RestaurantsPage() {
                 )}
               </button>
             </div>
-        
+            
             <button
               type="button"
               onClick={handleManualMapSearch}
@@ -442,16 +474,29 @@ export default function RestaurantsPage() {
                         {restaurant.priceRange}
                       </span>
                     </p>
-                    {restaurant.distance !== undefined && (
-                      <p className="text-blue-600 text-sm font-semibold mb-4">
-                        Distance: {restaurant.distance.toFixed(2)} km
-                      </p>
+                    {restaurant.distance !== undefined && (userLocation || manualMapLocation) && (
+                      <div className="flex items-center gap-2 text-blue-600 text-sm font-semibold mb-4">
+                        <span>Distance: {restaurant.distance.toFixed(2)} km</span>
+                        <Compass size={18} className="text-blue-500" />
+                        <span>Direction: {getDirection(userLocation?.latitude || manualMapLocation!.latitude, userLocation?.longitude || manualMapLocation!.longitude, restaurant.latitude, restaurant.longitude)}</span>
+                      </div>
                     )}
                     <NextLink href={`/restaurants/${restaurant.id}`}>
                       <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-300 ease-in-out">
                         View Menu
                       </button>
                     </NextLink>
+                    {(userLocation || manualMapLocation) && (
+                      <a 
+                        href={getDirectionsLink(restaurant) || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 w-full inline-flex justify-center items-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out"
+                      >
+                        <MapPin size={18} className="mr-2" />
+                        Get Directions
+                      </a>
+                    )}
                   </div>
                 </div>
               ))
