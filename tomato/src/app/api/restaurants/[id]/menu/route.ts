@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from "next/server";
 
 interface MenuItem {
@@ -611,15 +612,23 @@ const mockMenus: { [key: string]: MenuItem[] } = {
 };
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
-  const menu = mockMenus[id];
+  try {
+    // Await the params to resolve the promise
+    const { id } = await params;
 
-  if (!menu) {
-    return NextResponse.json({ error: "Menu not found" }, { status: 404 });
+    const menu = mockMenus[id];
+    if (!menu) {
+      return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(menu);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to fetch menu" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json(menu);
 }
