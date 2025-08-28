@@ -137,6 +137,7 @@ export default function RestaurantsPage() {
   const [manualSearchMode, setManualSearchMode] = useState(false);
   const [manualMapLocation, setManualMapLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [userLocationClicked, setUserLocationClicked] = useState(false);
+  const [manualLocationClicked, setManualLocationClicked] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -147,7 +148,9 @@ export default function RestaurantsPage() {
     setManualSearchMode(false);
     setManualMapLocation(null);
     setManualLocationQuery('');
-    setUserLocationClicked(true); // Set this flag
+    setUserLocationClicked(true);
+    setManualLocationClicked(true);
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -223,8 +226,9 @@ export default function RestaurantsPage() {
       if (userLocationClicked && userLocation) {
         fetchRestaurants(userLocation.latitude, userLocation.longitude, undefined, activeFilter, searchRadius);
         setUserLocationClicked(false);
-      } else if (manualMapLocation) {
+      } else if (manualLocationClicked && manualMapLocation) {
         fetchRestaurants(manualMapLocation.latitude, manualMapLocation.longitude, undefined, activeFilter, searchRadius);
+        setManualLocationClicked(false);
       } else if (manualLocationQuery) {
         fetchRestaurants(undefined, undefined, manualLocationQuery, activeFilter, searchRadius);
       } else {
@@ -238,7 +242,8 @@ export default function RestaurantsPage() {
     manualMapLocation,
     searchRadius,
     manualLocationQuery,
-    userLocationClicked
+    userLocationClicked,
+    manualLocationClicked
   ]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -258,7 +263,8 @@ export default function RestaurantsPage() {
     setManualMapLocation({ latitude: lat, longitude: lng });
     setUserLocation(null);
     setManualLocationQuery('');
-    setUserLocationClicked(false); // Reset this flag
+    setUserLocationClicked(false);
+    setManualLocationClicked(false);
   };
 
   const handleManualMapSearch = () => {
@@ -266,7 +272,8 @@ export default function RestaurantsPage() {
     setUserLocation(null);
     setManualLocationQuery('');
     setManualMapLocation(null);
-    setUserLocationClicked(false); // Reset this flag
+    setUserLocationClicked(false);
+    setManualLocationClicked(false);
   };
 
   const getDirectionsLink = (restaurant: Restaurant) => {
