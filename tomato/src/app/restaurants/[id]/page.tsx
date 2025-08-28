@@ -238,7 +238,7 @@ export default function RestaurantMenuPage() {
                   setIsCartOpen(true);
                   setIsSidebarOpen(false); // Close the main sidebar
                 }}
-                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg w-full text-left hover:bg-blue-50 hover:text-blue-600 relative"
+                className="flex items-center cursor-pointer px-4 py-3 text-lg font-medium text-gray-700 rounded-lg w-full text-left hover:bg-blue-50 hover:text-blue-600 relative "
                 disabled={cart.length === 0}
               >
                 <ShoppingCart size={20} className="mr-3 text-gray-500" />
