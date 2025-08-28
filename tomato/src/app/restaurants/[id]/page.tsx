@@ -4,8 +4,19 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
-import { Home as HomeIcon, Utensils, X as CloseIcon, Menu as MenuIcon } from 'lucide-react';
+import { Home as HomeIcon, Utensils, X as CloseIcon, Menu as MenuIcon, MapPin, Star, DollarSign } from 'lucide-react';
 import Link from 'next/link';
+
+// Define the Restaurant interface to include details
+interface Restaurant {
+  id: string;
+  name: string;
+  cuisine: string;
+  rating: number;
+  priceRange: string;
+  address: string;
+  imageUrl: string;
+}
 
 interface MenuItem {
   id: string;
@@ -16,12 +27,25 @@ interface MenuItem {
 export default function RestaurantMenuPage() {
   const { id } = useParams();
   const router = useRouter();
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null); // New state for restaurant details
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Use two separate useEffects for clarity and better management
   useEffect(() => {
+    // This effect fetches the restaurant's general information
+    const fetchRestaurantDetails = async () => {
+      try {
+        const { data } = await axios.get(`/api/restaurants/${id}`); // Assumes you have an endpoint like /api/restaurants/[id]
+        setRestaurant(data);
+      } catch (err: any) {
+        setError(err.message || 'Failed to fetch restaurant details');
+      }
+    };
+
+    // This effect fetches the restaurant's menu
     const fetchMenu = async () => {
       try {
         const { data } = await axios.get(`/api/restaurants/${id}/menu`);
@@ -32,11 +56,14 @@ export default function RestaurantMenuPage() {
         setLoading(false);
       }
     };
-    fetchMenu();
+
+    if (id) {
+      fetchRestaurantDetails();
+      fetchMenu();
+    }
   }, [id]);
 
   const handleBuyNow = (price: number) => {
-    // Redirect to /checkout with price as query param
     router.push(`/checkout?amount=${price}`);
   };
 
@@ -87,31 +114,58 @@ export default function RestaurantMenuPage() {
 
       {/* Main Content */}
       <main className="flex-1 lg:ml-64 p-6">
-        <h1 className="text-4xl font-extrabold mb-6 text-center">Restaurant Menu</h1>
-
-        {loading && <p className="text-center text-gray-700 text-lg">Loading menu... 🍽️</p>}
+        {loading && <p className="text-center text-gray-700 text-lg">Loading restaurant details... 🍽️</p>}
         {error && <p className="text-center text-red-600 text-lg font-semibold">{error}</p>}
+        
+        {/* Render restaurant details if available */}
+        {!loading && restaurant && (
+          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h1 className="text-5xl font-extrabold text-gray-900 mb-2">
+              {restaurant.name}
+            </h1>
+            <p className="text-gray-600 text-lg mb-4">{restaurant.cuisine}</p>
 
-        {!loading && menu.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {menu.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between transform transition-transform hover:scale-105 hover:shadow-2xl"
-              >
-                <div>
-                  <h2 className="text-2xl font-bold mb-2">{item.name}</h2>
-                  <p className="text-gray-700 font-semibold text-lg">${item.price}</p>
-                </div>
-                <button
-                  onClick={() => handleBuyNow(item.price)}
-                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition transform hover:-translate-y-1 hover:scale-105"
-                >
-                  Buy Now
-                </button>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+              <div className="flex items-center justify-center text-gray-700">
+                <MapPin className="mr-2 text-blue-500" size={20} />
+                <span className="font-medium">{restaurant.address}</span>
               </div>
-            ))}
+              <div className="flex items-center justify-center text-gray-700">
+                <Star className="mr-2 text-yellow-500" size={20} />
+                <span className="font-medium">Rating: {restaurant.rating.toFixed(1)}</span>
+              </div>
+              <div className="flex items-center justify-center text-gray-700">
+                <DollarSign className="mr-2 text-green-600" size={20} />
+                <span className="font-medium">Price Range: {restaurant.priceRange}</span>
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* Menu Items Section */}
+        {!loading && menu.length > 0 && (
+          <>
+            <h2 className="text-3xl font-extrabold mb-6 text-center">Menu</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {menu.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between transform transition-transform hover:scale-105 hover:shadow-2xl"
+                >
+                  <div>
+                    <h3 className="text-2xl font-bold mb-2">{item.name}</h3>
+                    <p className="text-gray-700 font-semibold text-lg">${item.price}</p>
+                  </div>
+                  <button
+                    onClick={() => handleBuyNow(item.price)}
+                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition transform hover:-translate-y-1 hover:scale-105"
+                  >
+                    Buy Now
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {!loading && menu.length === 0 && !error && (
