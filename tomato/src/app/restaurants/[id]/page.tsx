@@ -235,7 +235,7 @@ export default function RestaurantMenuPage() {
               <button
                 onClick={() => {
                   setIsCartOpen(true);
-                  setIsSidebarOpen(false); 
+                  setIsSidebarOpen(false);
                 }}
                 className="flex items-center cursor-pointer px-4 py-3 text-lg font-medium text-gray-700 rounded-lg w-full text-left hover:bg-blue-50 hover:text-blue-600 relative "
                 disabled={cart.length === 0}
@@ -263,7 +263,8 @@ export default function RestaurantMenuPage() {
 
         {!loading && restaurant && (
           <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-col md:flex-row md:items-center justify-center md:justify-between gap-3 md:gap-0 mb-4 w-full">
+
               <Link
                 href={{
                   pathname: '/restaurants',
@@ -275,7 +276,7 @@ export default function RestaurantMenuPage() {
                 className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
               >
                 <ArrowLeft size={24} className="mr-2" />
-                <span className="text-lg font-semibold">Back</span>
+                {/* <span className="text-lg font-semibold">Back</span> */}
               </Link>
               <div className="flex items-center justify-center text-gray-700">
                 <p className="mr-2 text-blue-500">Distance -</p>
@@ -287,7 +288,7 @@ export default function RestaurantMenuPage() {
               </div>
             </div>
 
-            <h1 className="text-5xl font-extrabold text-gray-900 mb-2">{restaurant.name}</h1>
+            <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{restaurant.name}</h1>
             <p className="text-gray-600 text-lg mb-4">{restaurant.cuisine}</p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
