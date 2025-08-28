@@ -329,9 +329,12 @@ export default function RestaurantsPage() {
           <h1 className="text-4xl font-extrabold text-gray-900 text-center">
             Nearby Restaurants
           </h1>
-
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
-            <div className="flex w-full max-w-xl gap-3">
+          <form
+            onSubmit={handleSearch}
+            className="flex flex-col items-center justify-center gap-3 mb-6 w-full"
+          >
+            <div className="flex flex-col sm:flex-row w-full max-w-xl gap-3">
+              {/* Input */}
               <input
                 type="text"
                 placeholder="Enter your city or address..."
@@ -339,6 +342,8 @@ export default function RestaurantsPage() {
                 onChange={(e) => setManualLocationQuery(e.target.value)}
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
+
+              {/* Search button */}
               <button
                 type="submit"
                 className="w-full sm:w-auto bg-blue-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-blue-700 transition"
@@ -346,33 +351,61 @@ export default function RestaurantsPage() {
               >
                 Search
               </button>
+            </div>
+
+            {/* Actions row (below input on mobile, inline on larger screens) */}
+            <div className="flex flex-row sm:flex-row w-full sm:w-auto gap-3 justify-center">
+              {/* Use current location */}
               <button
                 type="button"
                 onClick={fetchUserLocation}
-                className="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 transition flex items-center justify-center"
+                className="flex-1 sm:flex-none bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 transition flex items-center justify-center"
                 title="Use my current location"
                 disabled={locationLoading}
               >
                 {locationLoading ? (
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 
+              5.291A7.962 7.962 0 014 12H0c0 
+              3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                 ) : (
                   <LocateFixed size={20} />
                 )}
               </button>
-            </div>
 
-            <button
-              type="button"
-              onClick={handleManualMapSearch}
-              className={`w-full sm:w-auto p-2 rounded-lg transition flex items-center justify-center ${manualSearchMode ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              title="Manually select location on map"
-            >
-              <Focus size={20} />
-            </button>
+              {/* Manual select location */}
+              <button
+                type="button"
+                onClick={handleManualMapSearch}
+                className={`flex-1 sm:flex-none p-2 rounded-lg transition flex items-center justify-center ${manualSearchMode
+                    ? "bg-orange-500 text-white hover:bg-orange-600"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                title="Manually select location on map"
+              >
+                <Focus size={20} />
+              </button>
+            </div>
           </form>
+                      
 
           {(userLocation || manualMapLocation) && (
             <div className="flex justify-center items-center gap-3 mb-4">

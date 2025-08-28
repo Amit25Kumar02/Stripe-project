@@ -204,9 +204,8 @@ export default function RestaurantMenuPage() {
       </button>
 
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
+        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
       >
         <h2 className="text-3xl font-extrabold text-gray-900 mb-6 flex items-center">
           <span className="text-red-500 mr-2">Tomato</span> 🍔
@@ -236,7 +235,7 @@ export default function RestaurantMenuPage() {
               <button
                 onClick={() => {
                   setIsCartOpen(true);
-                  setIsSidebarOpen(false); // Close the main sidebar
+                  setIsSidebarOpen(false); 
                 }}
                 className="flex items-center cursor-pointer px-4 py-3 text-lg font-medium text-gray-700 rounded-lg w-full text-left hover:bg-blue-50 hover:text-blue-600 relative "
                 disabled={cart.length === 0}
@@ -278,6 +277,14 @@ export default function RestaurantMenuPage() {
                 <ArrowLeft size={24} className="mr-2" />
                 <span className="text-lg font-semibold">Back</span>
               </Link>
+              <div className="flex items-center justify-center text-gray-700">
+                <p className="mr-2 text-blue-500">Distance -</p>
+                {distance !== null ? (
+                  <span className="font-medium">{distance.toFixed(2)} km away</span>
+                ) : (
+                  <span className="font-medium">Please choose your location first</span>
+                )}
+              </div>
             </div>
 
             <h1 className="text-5xl font-extrabold text-gray-900 mb-2">{restaurant.name}</h1>
@@ -285,12 +292,8 @@ export default function RestaurantMenuPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
               <div className="flex items-center justify-center text-gray-700">
-                <MapPin className="mr-2 text-blue-500" size={20} />
-                {distance !== null ? (
-                  <span className="font-medium">{distance.toFixed(2)} km away</span>
-                ) : (
-                  <span className="font-medium">Please choose your location first</span>
-                )}
+                <MapPin className="mr-2 text-blue-500" size={18} />
+                {restaurant.address}
               </div>
               <div className="flex items-center justify-center text-gray-700">
                 <Star className="mr-2 text-yellow-500" size={20} />
@@ -336,9 +339,8 @@ export default function RestaurantMenuPage() {
 
       {/* Cart Sidebar */}
       <div
-        className={`fixed inset-y-0 right-0 w-80 bg-white shadow-xl transform ${
-          isCartOpen ? 'translate-x-0' : 'translate-x-full'
-        } transition-transform duration-300 ease-in-out z-50 p-6 flex flex-col`}
+        className={`fixed inset-y-0 right-0 w-80 bg-white shadow-xl transform ${isCartOpen ? 'translate-x-0' : 'translate-x-full'
+          } transition-transform duration-300 ease-in-out z-50 p-6 flex flex-col`}
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Your Cart</h2>
