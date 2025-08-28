@@ -13,6 +13,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import axios from "axios";
+import { ArrowLeft } from "lucide-react"; // Import the ArrowLeft icon
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -36,7 +37,7 @@ const subscriptionPlans = {
 const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
   const stripe = useStripe();
   const elements = useElements();
-  const router = useRouter();
+  const router = useRouter(); // Initialize the router
 
   const [cardHolderName, setCardHolderName] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -98,6 +99,15 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
 
   return (
     <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-8 md:p-12 space-y-6">
+      {/* Back button */}
+      <button
+        onClick={() => router.back()}
+        className="flex items-center text-blue-600 hover:text-blue-800 transition-colors mb-4"
+      >
+        <ArrowLeft size={24} className="mr-2" />
+        <span className="text-lg font-semibold">Back to menu</span>
+      </button>
+      
       <h2 className="text-3xl font-extrabold text-gray-900 text-center">Secure Checkout</h2>
 
       {/* Toggle */}

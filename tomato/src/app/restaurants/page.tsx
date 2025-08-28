@@ -177,7 +177,7 @@ export default function RestaurantsPage() {
       if (lat && lon) {
         params.q = `lat:${lat},lon:${lon}`;
       }
-      
+
       const response = await axios.get<Restaurant[]>('/api/restaurants/nearby', {
         params,
       });
@@ -232,10 +232,10 @@ export default function RestaurantsPage() {
       }
     }
   }, [
-    activeFilter, 
-    mounted, 
-    userLocation, 
-    manualMapLocation, 
+    activeFilter,
+    mounted,
+    userLocation,
+    manualMapLocation,
     searchRadius,
     manualLocationQuery,
     userLocationClicked
@@ -339,7 +339,7 @@ export default function RestaurantsPage() {
                 onChange={(e) => setManualLocationQuery(e.target.value)}
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
-                  <button
+              <button
                 type="submit"
                 className="w-full sm:w-auto bg-blue-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-blue-700 transition"
                 disabled={!manualLocationQuery.trim()}
@@ -363,7 +363,7 @@ export default function RestaurantsPage() {
                 )}
               </button>
             </div>
-            
+
             <button
               type="button"
               onClick={handleManualMapSearch}
@@ -481,13 +481,21 @@ export default function RestaurantsPage() {
                         <span>Direction: {getDirection(userLocation?.latitude || manualMapLocation!.latitude, userLocation?.longitude || manualMapLocation!.longitude, restaurant.latitude, restaurant.longitude)}</span>
                       </div>
                     )}
-                    <NextLink href={`/restaurants/${restaurant.id}`}>
+                    <NextLink
+                      href={{
+                        pathname: `/restaurants/${restaurant.id}`,
+                        query: {
+                          lat: (userLocation || manualMapLocation)?.latitude,
+                          lon: (userLocation || manualMapLocation)?.longitude,
+                        },
+                      }}
+                    >
                       <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-300 ease-in-out">
                         View Menu
                       </button>
                     </NextLink>
                     {(userLocation || manualMapLocation) && (
-                      <a 
+                      <a
                         href={getDirectionsLink(restaurant) || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
