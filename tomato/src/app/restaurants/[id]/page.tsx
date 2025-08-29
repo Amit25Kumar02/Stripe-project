@@ -70,6 +70,9 @@ export default function RestaurantMenuPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
+  // ✅ sorting state
+  const [sortOrder, setSortOrder] = useState<'lowToHigh' | 'highToLow' | 'none'>('none');
+
   // Load cart from localStorage on initial render
   useEffect(() => {
     try {
@@ -109,7 +112,7 @@ export default function RestaurantMenuPage() {
           );
           setDistance(dist);
         } else {
-          setDistance(null); // Explicitly set to null if location is not available
+          setDistance(null); 
         }
       } catch (err: any) {
         setError(err.message || 'Failed to fetch restaurant details');
@@ -132,6 +135,13 @@ export default function RestaurantMenuPage() {
       fetchMenu();
     }
   }, [id, searchParams]);
+
+  // ✅ sorted menu
+  const sortedMenu = [...menu].sort((a, b) => {
+    if (sortOrder === 'lowToHigh') return a.price - b.price;
+    if (sortOrder === 'highToLow') return b.price - a.price;
+    return 0;
+  });
 
   const addToCart = (item: MenuItem) => {
     setCart((prevCart) => {
@@ -189,7 +199,7 @@ export default function RestaurantMenuPage() {
         {isSidebarOpen ? <CloseIcon size={24} /> : <MenuIcon size={24} />}
       </button>
 
-      {/* Cart Button for Mobile (Main Content) */}
+      {/* Cart Button for Mobile */}
       <button
         className="lg:hidden fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg z-50 transition-transform transform hover:scale-110"
         onClick={() => setIsCartOpen(!isCartOpen)}
@@ -203,6 +213,7 @@ export default function RestaurantMenuPage() {
         )}
       </button>
 
+      {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
@@ -213,31 +224,22 @@ export default function RestaurantMenuPage() {
         <nav className="flex-grow">
           <ul className="space-y-2">
             <li>
-              <Link
-                href="/"
-                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600"
-                onClick={() => setIsSidebarOpen(false)}
-              >
+              <Link href="/" className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
                 <HomeIcon size={20} className="mr-3 text-gray-500" /> Home
               </Link>
             </li>
             <li>
-              <Link
-                href="/restaurants"
-                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600"
-                onClick={() => setIsSidebarOpen(false)}
-              >
+              <Link href="/restaurants" className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
                 <Utensils size={20} className="mr-3 text-gray-500" /> Restaurants
               </Link>
             </li>
-            {/* Cart Button in Sidebar */}
             <li>
               <button
                 onClick={() => {
                   setIsCartOpen(true);
                   setIsSidebarOpen(false);
                 }}
-                className="flex items-center cursor-pointer px-4 py-3 text-lg font-medium text-gray-700 rounded-lg w-full text-left hover:bg-blue-50 hover:text-blue-600 relative "
+                className="flex items-center cursor-pointer px-4 py-3 text-lg font-medium text-gray-700 rounded-lg w-full text-left hover:bg-blue-50 hover:text-blue-600 relative"
                 disabled={cart.length === 0}
               >
                 <ShoppingCart size={20} className="mr-3 text-gray-500" />
@@ -264,19 +266,14 @@ export default function RestaurantMenuPage() {
         {!loading && restaurant && (
           <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
             <div className="flex flex-col sm:flex-col md:flex-row md:items-center justify-center md:justify-between gap-3 md:gap-0 mb-4 w-full">
-
               <Link
                 href={{
                   pathname: '/restaurants',
-                  query: {
-                    lat: searchParams.get('lat'),
-                    lon: searchParams.get('lon'),
-                  },
+                  query: { lat: searchParams.get('lat'), lon: searchParams.get('lon') },
                 }}
                 className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
               >
                 <ArrowLeft size={24} className="mr-2" />
-                {/* <span className="text-lg font-semibold">Back</span> */}
               </Link>
               <div className="flex items-center justify-center text-gray-700">
                 <p className="mr-2 text-blue-500">Distance -</p>
@@ -310,9 +307,22 @@ export default function RestaurantMenuPage() {
 
         {!loading && menu.length > 0 && (
           <>
-            <h2 className="text-3xl font-extrabold mb-6 text-center">Menu</h2>
+            {/* ✅ Sorting dropdown */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-extrabold">Menu</h2>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as 'lowToHigh' | 'highToLow' | 'none')}
+                className="border rounded px-3 py-2 text-sm"
+              >
+                <option value="none">Sort by</option>
+                <option value="lowToHigh">Price: Low to High</option>
+                <option value="highToLow">Price: High to Low</option>
+              </select>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {menu.map((item) => (
+              {sortedMenu.map((item) => (
                 <div
                   key={item.id}
                   className="bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between transform transition-transform hover:scale-105 hover:shadow-2xl"
@@ -356,11 +366,9 @@ export default function RestaurantMenuPage() {
           <div className="flex-grow overflow-y-auto mb-4">
             {cart.map((item) => (
               <div key={item.id} className="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
-                <div className="flex items-center">
-                  <div>
-                    <h4 className="text-lg font-semibold">{item.name}</h4>
-                    <p className="text-sm text-gray-600">${item.price}</p>
-                  </div>
+                <div>
+                  <h4 className="text-lg font-semibold">{item.name}</h4>
+                  <p className="text-sm text-gray-600">${item.price}</p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button onClick={() => decreaseQuantity(item.id)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300">
@@ -395,10 +403,7 @@ export default function RestaurantMenuPage() {
       </div>
 
       {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
       )}
     </div>
   );
