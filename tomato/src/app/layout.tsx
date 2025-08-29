@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Tomato",
-  description: "A simple and efficient task management tool.",
+  description: "Find the best restaurants, cafes, and food spots in your city. Search nearby dining options, explore menus, and enjoy a seamless food discovery experience.",
 };
 
 export default function RootLayout({
