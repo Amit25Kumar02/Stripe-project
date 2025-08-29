@@ -120,7 +120,7 @@ export const mockRestaurants: Restaurant[] = [
     rating: 4.8,
     priceRange: '50 $',
     address: 'NH-8, Gurugram, Haryana',
-    imageUrl: 'https://assets.gqindia.com/photos/5f9d1d9489a2656914b1a206/master/pass/The%20Leela%20Palace%20Gurugram.jpg',
+    imageUrl: 'https://b.zmtcdn.com/data/pictures/2/18579912/c4f22f7b4e9f77f39589d311b93f7d1b.jpg?fit=around|750:500&crop=750:500;*,*',
     img: '/images/the-leela-ambience.jpg',
     latitude: 28.4595 + (Math.random() - 0.5) * 0.01,
     longitude: 77.0266 + (Math.random() - 0.5) * 0.01,

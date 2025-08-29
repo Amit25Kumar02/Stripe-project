@@ -170,59 +170,73 @@ export default function RestaurantsPage() {
     }
   };
 
-  const fetchRestaurants = async (lat?: number, lon?: number, textQuery?: string, filter?: string, radius?: number | 'all') => {
-    try {
-      setLoading(true);
-      setError(null);
+ const fetchRestaurants = async (
+  lat?: number,
+  lon?: number,
+  textQuery?: string,
+  filter?: string,
+  radius?: number | 'all'
+) => {
+  try {
+    setLoading(true);
+    setError(null);
 
-      const params: { q: string, lat?: number, lon?: number } = { q: textQuery || '' };
+    const params: Record<string, any> = {};
 
-      if (lat && lon) {
-        params.q = `lat:${lat},lon:${lon}`;
-      }
-
-      const response = await axios.get<Restaurant[]>('/api/restaurants/nearby', {
-        params,
-      });
-
-      let filteredData = response.data;
-      const centerLocation = userLocation || manualMapLocation;
-
-      if (centerLocation) {
-        filteredData = filteredData.map(restaurant => ({
-          ...restaurant,
-          distance: haversineDistance(centerLocation.latitude, centerLocation.longitude, restaurant.latitude, restaurant.longitude),
-        }));
-
-        if (radius !== 'all' && typeof radius === 'number') {
-          filteredData = filteredData.filter(restaurant => restaurant.distance! <= radius);
-        }
-      }
-
-      if (filter && filter !== 'all') {
-        if (filter === 'popular') {
-          filteredData = filteredData.filter(r => r.rating >= 4.5);
-        } else if (filter === 'new') {
-          filteredData = filteredData.filter(r => r.id.includes('g-res'));
-        } else {
-          filteredData = filteredData.filter(r => r.cuisine.toLowerCase().includes(filter));
-        }
-      }
-
-      if (centerLocation) {
-        filteredData.sort((a, b) => a.distance! - b.distance!);
-      }
-
-      setRestaurants(filteredData);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch restaurants.');
-    } finally {
-      setLoading(false);
+    if (lat && lon) {
+      params.lat = lat;
+      params.lon = lon;
+    } else if (textQuery) {
+      params.q = textQuery;
     }
-  };
+
+    const response = await axios.get<Restaurant[]>("/api/restaurants/nearby", { params });
+
+    let filteredData = response.data;
+    const centerLocation = userLocation || manualMapLocation;
+
+    if (centerLocation) {
+      filteredData = filteredData.map((restaurant) => ({
+        ...restaurant,
+        distance: haversineDistance(
+          centerLocation.latitude,
+          centerLocation.longitude,
+          restaurant.latitude,
+          restaurant.longitude
+        ),
+      }));
+
+      if (radius !== "all" && typeof radius === "number") {
+        filteredData = filteredData.filter((r) => r.distance! <= radius);
+      }
+    }
+
+    if (filter && filter !== "all") {
+      if (filter === "popular") {
+        filteredData = filteredData.filter((r) => r.rating >= 4.5);
+      } else if (filter === "new") {
+        filteredData = filteredData.filter((r) => r.id.includes("g-res"));
+      } else {
+        filteredData = filteredData.filter((r) =>
+          r.cuisine.toLowerCase().includes(filter)
+        );
+      }
+    }
+
+    if (centerLocation) {
+      filteredData.sort((a, b) => a.distance! - b.distance!);
+    }
+
+    setRestaurants(filteredData);
+  } catch (err: any) {
+    setError(err.message || "Failed to fetch restaurants.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
-    if (mounted) {
+    if (!mounted) return;
       if (userLocationClicked && userLocation) {
         fetchRestaurants(userLocation.latitude, userLocation.longitude, undefined, activeFilter, searchRadius);
         setUserLocationClicked(false);
@@ -234,7 +248,6 @@ export default function RestaurantsPage() {
       } else {
         fetchRestaurants(undefined, undefined, undefined, activeFilter, searchRadius);
       }
-    }
   }, [
     activeFilter,
     mounted,
@@ -394,7 +407,10 @@ export default function RestaurantsPage() {
                     ></path>
                   </svg>
                 ) : (
+                  <div className="flex items-center gap-2">
                   <LocateFixed size={20} />
+                  {/* <p>Use my current location</p> */}
+                  </div>
                 )}
               </button>
 
@@ -408,7 +424,10 @@ export default function RestaurantsPage() {
                   }`}
                 title="Manually select location on map"
               >
-                <Focus size={20} />
+                <div className="flex items-center gap-2">
+                  <Focus size={20} />
+                  {/* <p>Manually select location on map</p> */}
+                </div>
               </button>
             </div>
           </form>
