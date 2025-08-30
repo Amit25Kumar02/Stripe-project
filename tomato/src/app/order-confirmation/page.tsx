@@ -1,23 +1,31 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { CheckCircle, Home as HomeIcon, CreditCard, Menu as MenuIcon, X as CloseIcon, Utensils, ClipboardList } from "lucide-react";
 
-export default function OrderConfirmationPage() {
+// Define the shape of an item in the order for type safety
+interface OrderedItem {
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+// Separate component for client-side logic
+function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const amount = searchParams.get("amount");
   const itemsParam = searchParams.get("items");
 
-  const [orderedItems, setOrderedItems] = useState<any[]>([]);
+  const [orderedItems, setOrderedItems] = useState<OrderedItem[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
+    // Redirect to home if no amount is provided in the URL
     if (!amount) {
       router.push("/");
       return;
@@ -27,16 +35,6 @@ export default function OrderConfirmationPage() {
       try {
         const parsedItems = JSON.parse(decodeURIComponent(itemsParam));
         setOrderedItems(parsedItems);
-
-        // Save to MongoDB
-        fetch("/api/orders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            amount: Number(amount),
-            items: parsedItems,
-          }),
-        });
       } catch (e) {
         console.error("Failed to parse ordered items", e);
       }
@@ -142,5 +140,20 @@ export default function OrderConfirmationPage() {
         ></div>
       )}
     </div>
+  );
+}
+
+// Main page component wrapped in a Suspense boundary
+export default function OrderConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <p className="text-xl font-medium text-gray-500 animate-pulse">
+          Loading confirmation...
+        </p>
+      </div>
+    }>
+      <OrderConfirmationContent />
+    </Suspense>
   );
 }
