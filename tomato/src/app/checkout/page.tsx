@@ -37,7 +37,7 @@ const subscriptionPlans = {
 const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
   const stripe = useStripe();
   const elements = useElements();
-  const router = useRouter(); // Initialize the router
+  const router = useRouter();
 
   const [cardHolderName, setCardHolderName] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -45,13 +45,38 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [isSubscription, setIsSubscription] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<keyof typeof subscriptionPlans>("basic");
+  const searchParams = useSearchParams();
+
+const handlePaymentSuccess = async () => {
+  try {
+    const decodedItems = searchParams.get("items");
+    if (!decodedItems) throw new Error("No cart items found.");
+
+   // In handlePaymentSuccess
+await axios.post("/api/orders", {
+  id: Date.now().toString(),
+  date: new Date().toLocaleString(),
+  items: JSON.parse(decodeURIComponent(decodedItems)),
+  amount: parseFloat(amount.toFixed(2)),
+});
+
+    router.push("/order-history"); // redirect after saving
+  } catch (e: any) {
+    console.error("Failed to save order to MongoDB", e);
+    setPaymentError("Order could not be saved. Please contact support.");
+  }
+};
+
+
 
   useEffect(() => {
+    // This useEffect hook is now simplified. 
+    // It should trigger the data saving and redirection only when paymentSuccess becomes true
     if (paymentSuccess) {
-      const timer = setTimeout(() => router.push("/"), 2000);
-      return () => clearTimeout(timer);
+      handlePaymentSuccess();
     }
-  }, [paymentSuccess, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentSuccess]); // Only depends on paymentSuccess
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +98,9 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
       });
 
       if (error) setPaymentError(error.message || "Payment failed");
-      else if (paymentIntent && paymentIntent.status === "succeeded") setPaymentSuccess(true);
+      else if (paymentIntent && paymentIntent.status === "succeeded") {
+        setPaymentSuccess(true);
+      }
     } catch (err: any) {
       setPaymentError(err.message || "Payment error occurred");
     } finally {
@@ -99,7 +126,6 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
 
   return (
     <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-8 md:p-12 space-y-6">
-      {/* Back button */}
       <button
         onClick={() => router.back()}
         className="flex items-center text-blue-600 hover:text-blue-800 transition-colors mb-4"
@@ -107,10 +133,9 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
         <ArrowLeft size={24} className="mr-2" />
         <span className="text-lg font-semibold">Back to menu</span>
       </button>
-      
+
       <h2 className="text-3xl font-extrabold text-gray-900 text-center">Secure Checkout</h2>
 
-      {/* Toggle */}
       <div className="flex justify-center items-center gap-4 mb-6">
         <span className={`font-medium ${!isSubscription ? "text-blue-600" : "text-gray-500"}`}>One-time</span>
         <label className="relative inline-flex items-center cursor-pointer">
@@ -164,9 +189,8 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
               <button
                 key={planKey}
                 onClick={() => setSelectedPlan(planKey as keyof typeof subscriptionPlans)}
-                className={`px-4 py-2 rounded-lg font-semibold shadow-md transition-all ${
-                  selectedPlan === planKey ? "bg-green-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
+                className={`px-4 py-2 rounded-lg font-semibold shadow-md transition-all ${selectedPlan === planKey ? "bg-green-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
               >
                 {subscriptionPlans[planKey as keyof typeof subscriptionPlans].name}
               </button>
@@ -187,7 +211,6 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
   );
 };
 
-// Create a separate component that uses useSearchParams
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const amount = Number(searchParams.get("amount")) || 0;

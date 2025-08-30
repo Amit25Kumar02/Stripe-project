@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
@@ -16,6 +17,7 @@ import {
   ShoppingCart,
   Minus,
   Plus,
+  ClipboardList as ClipboardListIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -81,7 +83,7 @@ export default function RestaurantMenuPage() {
         setCart(JSON.parse(savedCart));
       }
     } catch (e) {
-      console.error("Failed to load cart from localStorage", e);
+      console.error('Failed to load cart from localStorage', e);
     }
   }, []);
 
@@ -90,7 +92,7 @@ export default function RestaurantMenuPage() {
     try {
       localStorage.setItem('cart', JSON.stringify(cart));
     } catch (e) {
-      console.error("Failed to save cart to localStorage", e);
+      console.error('Failed to save cart to localStorage', e);
     }
   }, [cart]);
 
@@ -112,7 +114,7 @@ export default function RestaurantMenuPage() {
           );
           setDistance(dist);
         } else {
-          setDistance(null); 
+          setDistance(null);
         }
       } catch (err: any) {
         setError(err.message || 'Failed to fetch restaurant details');
@@ -185,8 +187,12 @@ export default function RestaurantMenuPage() {
 
   const handleCheckout = () => {
     const totalAmount = calculateTotal();
-    clearCart();
-    router.push(`/checkout?amount=${totalAmount}`);
+
+    // encode items as JSON in query param
+    const encodedItems = encodeURIComponent(JSON.stringify(cart));
+
+    // ⚠️ important: don't clear before redirecting, otherwise data is gone
+    router.push(`/checkout?amount=${totalAmount}&items=${encodedItems}`);
   };
 
   return (
@@ -215,8 +221,9 @@ export default function RestaurantMenuPage() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
+        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
       >
         <h2 className="text-3xl font-extrabold text-gray-900 mb-6 flex items-center">
           <span className="text-red-500 mr-2">Tomato</span> 🍔
@@ -224,12 +231,20 @@ export default function RestaurantMenuPage() {
         <nav className="flex-grow">
           <ul className="space-y-2">
             <li>
-              <Link href="/" className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+              <Link
+                href="/"
+                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600"
+                onClick={() => setIsSidebarOpen(false)}
+              >
                 <HomeIcon size={20} className="mr-3 text-gray-500" /> Home
               </Link>
             </li>
             <li>
-              <Link href="/restaurants" className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600" onClick={() => setIsSidebarOpen(false)}>
+              <Link
+                href="/restaurants"
+                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600"
+                onClick={() => setIsSidebarOpen(false)}
+              >
                 <Utensils size={20} className="mr-3 text-gray-500" /> Restaurants
               </Link>
             </li>
@@ -250,6 +265,16 @@ export default function RestaurantMenuPage() {
                   </span>
                 )}
               </button>
+            </li>
+            {/* ✅ New "Order History" link added here */}
+            <li>
+              <Link
+                href="/order-history"
+                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600"
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <ClipboardListIcon size={20} className="mr-3 text-gray-500" /> Order History
+              </Link>
             </li>
           </ul>
         </nav>
@@ -350,8 +375,9 @@ export default function RestaurantMenuPage() {
 
       {/* Cart Sidebar */}
       <div
-        className={`fixed inset-y-0 right-0 w-80 bg-white shadow-xl transform ${isCartOpen ? 'translate-x-0' : 'translate-x-full'
-          } transition-transform duration-300 ease-in-out z-50 p-6 flex flex-col`}
+        className={`fixed inset-y-0 right-0 w-80 bg-white shadow-xl transform ${
+          isCartOpen ? 'translate-x-0' : 'translate-x-full'
+        } transition-transform duration-300 ease-in-out z-50 p-6 flex flex-col`}
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Your Cart</h2>
@@ -365,7 +391,10 @@ export default function RestaurantMenuPage() {
         ) : (
           <div className="flex-grow overflow-y-auto mb-4">
             {cart.map((item) => (
-              <div key={item.id} className="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
+              <div
+                key={item.id}
+                className="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0"
+              >
                 <div>
                   <h4 className="text-lg font-semibold">{item.name}</h4>
                   <p className="text-sm text-gray-600">${item.price}</p>

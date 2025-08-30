@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home as HomeIcon, Utensils, CreditCard, Menu as MenuIcon, X as CloseIcon} from 'lucide-react';
+import { Home as HomeIcon, Utensils, CreditCard, Menu as MenuIcon, X as CloseIcon, ClipboardListIcon} from 'lucide-react';
 import React, { useState } from 'react';
 
 export default function Home() {
@@ -11,6 +11,7 @@ export default function Home() {
     { name: 'Home', href: '/', icon: <HomeIcon size={20} /> },
     { name: 'Restaurants', href: '/restaurants', icon: <Utensils size={20} /> },
     { name: 'Checkout', href: '/checkout', icon: <CreditCard size={20} /> },
+    { name: 'Order History', href: '/order-history', icon: <ClipboardListIcon size={20} /> },
   ];
 
   const dummyItems = [
