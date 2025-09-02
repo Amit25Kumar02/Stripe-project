@@ -1,10 +1,12 @@
-import { NextResponse } from 'next/server';
-import { mockRestaurants } from '@/lib/data';
 
-// Haversine formula
+import { NextRequest, NextResponse } from "next/server";
+import connect from "@/lib/mongodb";
+import Restaurant from "@/models/Restaurant";
+
+// Haversine formula to calculate distance in km
 const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const toRad = (x: number) => (x * Math.PI) / 180;
-  const R = 6371;
+  const R = 6371; // Earth's radius in km
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const a =
@@ -15,33 +17,47 @@ const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 };
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const q = searchParams.get('q') || '';
-  const lat = searchParams.get('lat');
-  const lon = searchParams.get('lon');
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const q = searchParams.get("q") || "";
+  const lat = searchParams.get("lat");
+  const lon = searchParams.get("lon");
 
+  await connect();
+
+  // Fetch all restaurants (we will filter in JS if needed)
+  let restaurants = await Restaurant.find({});
+
+  // Text search
+  if (q) {
+    const lowerQ = q.toLowerCase();
+    restaurants = restaurants.filter(
+      (r) =>
+        r.name.toLowerCase().includes(lowerQ) ||
+        r.cuisine.toLowerCase().includes(lowerQ) ||
+        r.address.toLowerCase().includes(lowerQ)
+    );
+  }
+
+  // Nearby search
   if (lat && lon) {
     const latNum = parseFloat(lat);
     const lonNum = parseFloat(lon);
-    const searchRadius = 5;
+    const searchRadius = 5; // 5 km
 
-    const nearbyRestaurants = mockRestaurants.filter(r => {
+    restaurants = restaurants.filter((r) => {
       const distance = haversineDistance(latNum, lonNum, r.latitude, r.longitude);
       return distance <= searchRadius;
     });
-
-    return NextResponse.json(nearbyRestaurants);
   }
 
-  if (q) {
-    const filtered = mockRestaurants.filter(r =>
-      r.name.toLowerCase().includes(q.toLowerCase()) ||
-      r.cuisine.toLowerCase().includes(q.toLowerCase()) ||
-      r.address.toLowerCase().includes(q.toLowerCase())
-    );
-    return NextResponse.json(filtered);
-  }
+  return NextResponse.json(restaurants);
+};
 
-  return NextResponse.json(mockRestaurants);
+export async function POST(req: NextRequest) {
+  const data = await req.json();
+  await connect();
+  const restaurant = new Restaurant(data);
+  await restaurant.save();
+  return NextResponse.json(restaurant);
 }

@@ -1,7 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Add the images configuration here
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'content.jdmagicbox.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;

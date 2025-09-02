@@ -26,7 +26,7 @@ import axios from 'axios';
 const Map = lazy(() => import('../components/map'));
 
 interface Restaurant {
-  id: string;
+  _id: string;
   name: string;
   cuisine: string;
   rating: number;
@@ -215,7 +215,7 @@ export default function RestaurantsPage() {
       if (filter === "popular") {
         filteredData = filteredData.filter((r) => r.rating >= 4.5);
       } else if (filter === "new") {
-        filteredData = filteredData.filter((r) => r.id.includes("g-res"));
+        filteredData = filteredData.slice(-5); // Assuming last 5 are new arrivals
       } else {
         filteredData = filteredData.filter((r) =>
           r.cuisine.toLowerCase().includes(filter)
@@ -487,9 +487,9 @@ export default function RestaurantsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {restaurants.length > 0 ? (
-              restaurants.map((restaurant) => (
+              restaurants.map((restaurant, index) => (
                 <div
-                  key={restaurant.id}
+                 key={restaurant._id || `${restaurant.name}-${index}`}
                   className="bg-white rounded-xl shadow-md overflow-hidden transform transition duration-300 ease-in-out hover:scale-105 hover:shadow-xl"
                 >
                   <Image
@@ -542,7 +542,7 @@ export default function RestaurantsPage() {
                     )}
                     <NextLink
                       href={{
-                        pathname: `/restaurants/${restaurant.id}`,
+                        pathname: `/restaurants/${restaurant._id}`,
                         query: {
                           lat: (userLocation || manualMapLocation)?.latitude,
                           lon: (userLocation || manualMapLocation)?.longitude,

@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -10,20 +9,21 @@ import {
   Utensils,
   X as CloseIcon,
   Menu as MenuIcon,
-  MapPin,
-  Star,
-  DollarSign,
-  ArrowLeft,
   ShoppingCart,
   Minus,
   Plus,
-  ClipboardList as ClipboardListIcon,
+  ClipboardListIcon,
+  MapPin,
+  Star,
+  ChevronLeft, // Import the ChevronLeft icon
 } from 'lucide-react';
 import Link from 'next/link';
+import * as Dialog from '@radix-ui/react-dialog';
+import Image from 'next/image';
 
-// Define the Restaurant interface
+// Interfaces
 interface Restaurant {
-  id: string;
+  _id: string;
   name: string;
   cuisine: string;
   rating: number;
@@ -34,35 +34,34 @@ interface Restaurant {
   longitude: number;
 }
 
-// Define the MenuItem interface
 interface MenuItem {
-  id: string;
+  _id: string;
   name: string;
   price: number;
 }
 
-// Define the CartItem interface
 interface CartItem extends MenuItem {
   quantity: number;
 }
 
-// Haversine distance calculation
+// Haversine distance
 const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const toRad = (value: number) => (value * Math.PI) / 180;
   const R = 6371; // km
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
 
 export default function RestaurantMenuPage() {
-  const { id } = useParams();
+  const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const restaurantId = params.id;
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,49 +69,33 @@ export default function RestaurantMenuPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-
-  // ✅ sorting state
   const [sortOrder, setSortOrder] = useState<'lowToHigh' | 'highToLow' | 'none'>('none');
 
-  // Load cart from localStorage on initial render
+  // Load cart from localStorage
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem('cart');
-      if (savedCart) {
-        setCart(JSON.parse(savedCart));
-      }
-    } catch (e) {
-      console.error('Failed to load cart from localStorage', e);
-    }
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) setCart(JSON.parse(savedCart));
   }, []);
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage
   useEffect(() => {
-    try {
-      localStorage.setItem('cart', JSON.stringify(cart));
-    } catch (e) {
-      console.error('Failed to save cart to localStorage', e);
-    }
+    localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
 
+  // Fetch restaurant details and menu
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
       try {
-        const { data } = await axios.get<Restaurant>(`/api/restaurants/${id}`);
+        const { data } = await axios.get<Restaurant>(`/api/restaurants/${restaurantId}`);
         setRestaurant(data);
 
         const userLat = searchParams.get('lat');
         const userLon = searchParams.get('lon');
 
         if (userLat && userLon && data.latitude && data.longitude) {
-          const dist = haversineDistance(
-            parseFloat(userLat),
-            parseFloat(userLon),
-            data.latitude,
-            data.longitude
+          setDistance(
+            haversineDistance(parseFloat(userLat), parseFloat(userLon), data.latitude, data.longitude)
           );
-          setDistance(dist);
         } else {
           setDistance(null);
         }
@@ -123,8 +106,8 @@ export default function RestaurantMenuPage() {
 
     const fetchMenu = async () => {
       try {
-        const { data } = await axios.get<MenuItem[]>(`/api/restaurants/${id}/menu`);
-        setMenu(data);
+        const { data } = await axios.get<{ menu: MenuItem[] }>(`/api/restaurants/${restaurantId}/menu`);
+        setMenu(data.menu);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch menu');
       } finally {
@@ -132,98 +115,55 @@ export default function RestaurantMenuPage() {
       }
     };
 
-    if (id) {
+    if (restaurantId) {
       fetchRestaurantDetails();
       fetchMenu();
     }
-  }, [id, searchParams]);
+  }, [restaurantId, searchParams]);
 
-  // ✅ sorted menu
+  // Sorted menu
   const sortedMenu = [...menu].sort((a, b) => {
     if (sortOrder === 'lowToHigh') return a.price - b.price;
     if (sortOrder === 'highToLow') return b.price - a.price;
     return 0;
   });
 
+  // Cart logic
   const addToCart = (item: MenuItem) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((cartItem) => cartItem.id === item.id);
-      if (existingItem) {
-        return prevCart.map((cartItem) =>
-          cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem
-        );
-      } else {
-        return [...prevCart, { ...item, quantity: 1 }];
-      }
+    setCart((prev) => {
+      const exist = prev.find((ci) => ci._id === item._id);
+      if (exist) return prev.map((ci) => (ci._id === item._id ? { ...ci, quantity: ci.quantity + 1 } : ci));
+      return [...prev, { ...item, quantity: 1 }];
     });
   };
-
-  const removeFromCart = (itemId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== itemId));
-  };
-
-  const increaseQuantity = (itemId: string) => {
-    setCart((prevCart) =>
-      prevCart.map((item) => (item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item))
+  const removeFromCart = (id: string) => setCart((prev) => prev.filter((ci) => ci._id !== id));
+  const increaseQuantity = (id: string) =>
+    setCart((prev) => prev.map((ci) => (ci._id === id ? { ...ci, quantity: ci.quantity + 1 } : ci)));
+  const decreaseQuantity = (id: string) =>
+    setCart((prev) =>
+      prev.map((ci) => (ci._id === id ? { ...ci, quantity: Math.max(1, ci.quantity - 1) } : ci))
     );
-  };
-
-  const decreaseQuantity = (itemId: string) => {
-    setCart((prevCart) =>
-      prevCart.map((item) =>
-        item.id === itemId ? { ...item, quantity: Math.max(1, item.quantity - 1) } : item
-      )
-    );
-  };
-
-  const calculateTotal = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
-  };
-
-  const clearCart = () => {
-    setCart([]);
-    localStorage.removeItem('cart');
-  };
-
+  const calculateTotal = () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const handleCheckout = () => {
     const totalAmount = calculateTotal();
-
-    // encode items as JSON in query param
     const encodedItems = encodeURIComponent(JSON.stringify(cart));
-
-    // ⚠️ important: don't clear before redirecting, otherwise data is gone
     router.push(`/checkout?amount=${totalAmount}&items=${encodedItems}`);
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
-      {/* Sidebar & Mobile Toggle */}
+      {/* Sidebar toggle */}
       <button
-        className="lg:hidden fixed top-4 left-4 bg-blue-600 text-white p-2 rounded-full shadow-lg z-50"
+        className="lg:hidden fixed top-4 left-4 bg-blue-600 text-white p-2 rounded-full z-50"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
       >
         {isSidebarOpen ? <CloseIcon size={24} /> : <MenuIcon size={24} />}
       </button>
 
-      {/* Cart Button for Mobile */}
-      <button
-        className="lg:hidden fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg z-50 transition-transform transform hover:scale-110"
-        onClick={() => setIsCartOpen(!isCartOpen)}
-        disabled={cart.length === 0}
-      >
-        <ShoppingCart size={24} />
-        {cart.length > 0 && (
-          <span className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-            {cart.reduce((total, item) => total + item.quantity, 0)}
-          </span>
-        )}
-      </button>
-
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
+        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0 transition-transform p-6 flex flex-col z-40`}
       >
         <h2 className="text-3xl font-extrabold text-gray-900 mb-6 flex items-center">
           <span className="text-red-500 mr-2">Tomato</span> 🍔
@@ -233,8 +173,7 @@ export default function RestaurantMenuPage() {
             <li>
               <Link
                 href="/"
-                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600"
-                onClick={() => setIsSidebarOpen(false)}
+                className="flex items-center px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600"
               >
                 <HomeIcon size={20} className="mr-3 text-gray-500" /> Home
               </Link>
@@ -242,198 +181,230 @@ export default function RestaurantMenuPage() {
             <li>
               <Link
                 href="/restaurants"
-                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600"
-                onClick={() => setIsSidebarOpen(false)}
+                className="flex items-center px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600"
               >
                 <Utensils size={20} className="mr-3 text-gray-500" /> Restaurants
               </Link>
             </li>
             <li>
-              <button
-                onClick={() => {
-                  setIsCartOpen(true);
-                  setIsSidebarOpen(false);
-                }}
-                className="flex items-center cursor-pointer px-4 py-3 text-lg font-medium text-gray-700 rounded-lg w-full text-left hover:bg-blue-50 hover:text-blue-600 relative"
-                disabled={cart.length === 0}
-              >
-                <ShoppingCart size={20} className="mr-3 text-gray-500" />
-                Cart
-                {cart.length > 0 && (
-                  <span className="absolute top-2 right-4 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {cart.reduce((total, item) => total + item.quantity, 0)}
-                  </span>
-                )}
-              </button>
+              <Dialog.Root>
+                <Dialog.Trigger className="flex items-center w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600">
+                  <ShoppingCart size={20} className="mr-3 text-gray-500" /> Cart
+                  {cart.length > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {cart.reduce((total, item) => total + item.quantity, 0)}
+                    </span>
+                  )}
+                </Dialog.Trigger>
+                <Dialog.Portal>
+                  <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+                  <Dialog.Content className="fixed right-0 top-0 w-80 h-full bg-white p-6 shadow-xl flex flex-col z-50">
+                    <div className="flex justify-between items-center mb-6">
+                      <Dialog.Title className="text-2xl font-bold">Your Cart</Dialog.Title>
+                      <Dialog.Close className="text-gray-500 hover:text-gray-800">
+                        <CloseIcon size={24} />
+                      </Dialog.Close>
+                    </div>
+                    {cart.length === 0 ? (
+                      <p className="text-gray-500 text-center flex-grow flex items-center justify-center">
+                        Your cart is empty.
+                      </p>
+                    ) : (
+                      <div className="flex-grow overflow-y-auto mb-4">
+                        {cart.map((item) => (
+                          <div
+                            key={item._id}
+                            className="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0"
+                          >
+                            <div>
+                              <h4 className="text-lg font-semibold">{item.name}</h4>
+                              <p className="text-sm text-gray-600">${item.price}</p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => decreaseQuantity(item._id)}
+                                className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
+                              >
+                                <Minus size={16} />
+                              </button>
+                              <span className="font-semibold">{item.quantity}</span>
+                              <button
+                                onClick={() => increaseQuantity(item._id)}
+                                className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
+                              >
+                                <Plus size={16} />
+                              </button>
+                              <button
+                                onClick={() => removeFromCart(item._id)}
+                                className="ml-2 text-red-500 hover:text-red-700"
+                              >
+                                <CloseIcon size={20} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between items-center mb-4 text-xl font-bold">
+                        <span>Total:</span>
+                        <span>${calculateTotal().toFixed(2)}</span>
+                      </div>
+                      <button
+                        onClick={handleCheckout}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition"
+                        disabled={cart.length === 0}
+                      >
+                        Proceed to Checkout
+                      </button>
+                    </div>
+                  </Dialog.Content>
+                </Dialog.Portal>
+              </Dialog.Root>
             </li>
-            {/* ✅ New "Order History" link added here */}
             <li>
               <Link
                 href="/order-history"
-                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600"
-                onClick={() => setIsSidebarOpen(false)}
+                className="flex items-center px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600"
               >
                 <ClipboardListIcon size={20} className="mr-3 text-gray-500" /> Order History
               </Link>
             </li>
           </ul>
         </nav>
-        <div className="mt-auto text-center text-sm text-gray-500 border-t pt-4">
-          &copy; {new Date().getFullYear()} Tomato
-        </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 p-6">
-        {loading && <p className="text-center text-gray-700 text-lg">Loading restaurant details... 🍽️</p>}
-        {error && <p className="text-center text-red-600 text-lg font-semibold">{error}</p>}
+      <main className="flex-1 lg:ml-64 p-4 lg:p-8">
+        {loading && <p className="text-center text-gray-500">Loading...</p>}
+        {error && <p className="text-center text-red-600 font-semibold">{error}</p>}
 
         {!loading && restaurant && (
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-            <div className="flex flex-col sm:flex-col md:flex-row md:items-center justify-center md:justify-between gap-3 md:gap-0 mb-4 w-full">
-              <Link
-                href={{
-                  pathname: '/restaurants',
-                  query: { lat: searchParams.get('lat'), lon: searchParams.get('lon') },
-                }}
+          <div className="mb-8">
+            {/* Back Arrow Button */}
+            <div className="mb-4">
+              <button
+                onClick={() => router.back()}
                 className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
               >
-                <ArrowLeft size={24} className="mr-2" />
-              </Link>
-              <div className="flex items-center justify-center text-gray-700">
-                <p className="mr-2 text-blue-500">Distance -</p>
-                {distance !== null ? (
-                  <span className="font-medium">{distance.toFixed(2)} km away</span>
-                ) : (
-                  <span className="font-medium">Please choose your location first</span>
-                )}
+                <ChevronLeft size={24} className="mr-1" />
+                <span className="text-lg font-medium">Back to Restaurants</span>
+              </button>
+            </div>
+
+            {/* Restaurant Header Section */}
+            <div className="relative h-64 w-full rounded-2xl overflow-hidden shadow-lg mb-8">
+              <Image
+                src={restaurant.imageUrl || `https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
+                  restaurant.name
+                )}`}
+                alt={restaurant.name}
+                fill
+                className="absolute inset-0 w-full h-full object-cover"
+                unoptimized
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = `https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
+                    restaurant.name
+                  )}`;
+                }}
+              />
+              {/* Overlay with increased blackness */}
+              <div className="absolute inset-0 bg-black/60 flex items-end p-6"> {/* Changed opacity to 60% */}
+                <div className="text-white w-full"> {/* Added w-full here */}
+                  <h1 className="text-4xl font-extrabold mb-1 drop-shadow-md">{restaurant.name}</h1>
+                  <p className="text-lg font-light flex items-center mb-1">
+                    <Utensils size={18} className="mr-2" />
+                    {restaurant.cuisine}
+                  </p>
+                  {distance && (
+                    <p className="text-sm font-medium opacity-80 mb-2"> {/* Added mb-2 for spacing */}
+                      <span className="bg-white/20 px-2 py-1 rounded-full">
+                        {distance.toFixed(2)} km away
+                      </span>
+                    </p>
+                  )}
+                  {/* Flex justify-between for address and rating */}
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-lg font-light flex items-center flex-1"> {/* flex-1 to allow spacing */}
+                      <MapPin size={18} className="mr-2" />
+                      {restaurant.address}
+                    </p>
+                    <p className="text-lg font-light flex items-center">
+                      <Star size={18} className="mr-2" />
+                      {restaurant.rating}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{restaurant.name}</h1>
-            <p className="text-gray-600 text-lg mb-4">{restaurant.cuisine}</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-              <div className="flex items-center justify-center text-gray-700">
-                <MapPin className="mr-2 text-blue-500" size={18} />
-                {restaurant.address}
-              </div>
-              <div className="flex items-center justify-center text-gray-700">
-                <Star className="mr-2 text-yellow-500" size={20} />
-                <span className="font-medium">Rating: {restaurant.rating.toFixed(1)}</span>
-              </div>
-              <div className="flex items-center justify-center text-gray-700">
-                <DollarSign className="mr-2 text-green-600" size={20} />
-                <span className="font-medium">Price Range: {restaurant.priceRange}</span>
+            {/* Menu & Sorting Section */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-bold text-gray-800">Menu</h2>
+              <div className="flex items-center space-x-2">
+                <label className="text-gray-700 font-medium">Sort by:</label>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as 'lowToHigh' | 'highToLow' | 'none')}
+                  className="border-2 border-gray-300 rounded-lg p-2 text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                >
+                  <option value="none">Default</option>
+                  <option value="lowToHigh">Price: Low to High</option>
+                  <option value="highToLow">Price: High to Low</option>
+                </select>
               </div>
             </div>
           </div>
         )}
 
-        {!loading && menu.length > 0 && (
-          <>
-            {/* ✅ Sorting dropdown */}
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-extrabold">Menu</h2>
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as 'lowToHigh' | 'highToLow' | 'none')}
-                className="border rounded px-3 py-2 text-sm"
+        {!loading && sortedMenu.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {sortedMenu.map((item) => (
+              <div
+                key={item._id}
+                className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col cursor-pointer"
               >
-                <option value="none">Sort by</option>
-                <option value="lowToHigh">Price: Low to High</option>
-                <option value="highToLow">Price: High to Low</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedMenu.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-2xl shadow-lg p-6 flex flex-col justify-between transform transition-transform hover:scale-105 hover:shadow-2xl"
-                >
+                <div className="relative h-40 w-full bg-gray-200">
+                  <Image
+                    src={
+                      `https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
+                        item.name
+                      )}`
+                    }
+                    alt={item.name}
+                    width={400}
+                    height={150}
+                    className="w-full h-40 object-cover"
+                    unoptimized
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.onerror = null;
+                      target.src = `https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
+                        item.name
+                      )}`;
+                    }}
+                  />
+                </div>
+                <div className="p-4 flex flex-col flex-grow justify-between">
                   <div>
-                    <h3 className="text-2xl font-bold mb-2">{item.name}</h3>
-                    <p className="text-gray-700 font-semibold text-lg">${item.price}</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1 truncate">{item.name}</h3>
+                    <p className="text-lg font-semibold text-green-600">${item.price}</p>
                   </div>
                   <button
                     onClick={() => addToCart(item)}
-                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition transform hover:-translate-y-1 hover:scale-105"
+                    className="mt-4 w-full bg-blue-600 text-white font-semibold py-2 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
                   >
-                    Add to Cart
-                  </button>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {!loading && menu.length === 0 && !error && (
-          <p className="text-center text-gray-500 text-lg">No menu items found for this restaurant.</p>
-        )}
-      </main>
-
-      {/* Cart Sidebar */}
-      <div
-        className={`fixed inset-y-0 right-0 w-80 bg-white shadow-xl transform ${
-          isCartOpen ? 'translate-x-0' : 'translate-x-full'
-        } transition-transform duration-300 ease-in-out z-50 p-6 flex flex-col`}
-      >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Your Cart</h2>
-          <button onClick={() => setIsCartOpen(false)} className="text-gray-500 hover:text-gray-800">
-            <CloseIcon size={24} />
-          </button>
-        </div>
-
-        {cart.length === 0 ? (
-          <p className="text-gray-500 text-center flex-grow flex items-center justify-center">Your cart is empty.</p>
-        ) : (
-          <div className="flex-grow overflow-y-auto mb-4">
-            {cart.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0"
-              >
-                <div>
-                  <h4 className="text-lg font-semibold">{item.name}</h4>
-                  <p className="text-sm text-gray-600">${item.price}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button onClick={() => decreaseQuantity(item.id)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300">
-                    <Minus size={16} />
-                  </button>
-                  <span className="font-semibold">{item.quantity}</span>
-                  <button onClick={() => increaseQuantity(item.id)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300">
-                    <Plus size={16} />
-                  </button>
-                  <button onClick={() => removeFromCart(item.id)} className="ml-2 text-red-500 hover:text-red-700">
-                    <CloseIcon size={20} />
+                    <ShoppingCart size={20} />
+                    <span>Add to Cart</span>
                   </button>
                 </div>
               </div>
             ))}
           </div>
         )}
-
-        <div className="border-t pt-4">
-          <div className="flex justify-between items-center mb-4 text-xl font-bold">
-            <span>Total:</span>
-            <span>${calculateTotal().toFixed(2)}</span>
-          </div>
-          <button
-            onClick={handleCheckout}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition"
-            disabled={cart.length === 0}
-          >
-            Proceed to Checkout
-          </button>
-        </div>
-      </div>
-
-      {isSidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
-      )}
+      </main>
     </div>
   );
 }

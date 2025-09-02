@@ -1,633 +1,73 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
+import connect from "@/lib/mongodb";
+import Restaurant from "@/models/Restaurant";
 
-interface MenuItem {
-  id: string;
-  name: string;
-  price: number;
+export async function POST(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    await connect();
+    const params = await context.params;
+    const restaurantId = params.id; // dynamic id from URL
+    const body = await req.json(); // Expecting array of menu items
+
+    if (!Array.isArray(body)) {
+      return NextResponse.json(
+        { message: "Body must be an array of menu items" },
+        { status: 400 }
+      );
+    }
+
+    // Validate each item
+    for (const item of body) {
+      if (!item.name || typeof item.price !== "number") {
+        return NextResponse.json(
+          { message: "Each menu item must have a name and numeric price" },
+          { status: 400 }
+        );
+      }
+    }
+
+    const restaurant = await Restaurant.findById(restaurantId);
+    if (!restaurant) {
+      return NextResponse.json({ message: "Restaurant not found" }, { status: 404 });
+    }
+
+    // Replace or append menu
+    restaurant.menu = body;
+    await restaurant.save();
+
+    return NextResponse.json({ message: "Menu updated successfully", menu: restaurant.menu }, { status: 200 });
+  } catch (error: any) {
+    console.error("Error updating menu:", error.message);
+    return NextResponse.json(
+      { message: "Server error", error: error.message },
+      { status: 500 }
+    );
+  }
 }
-
-const mockMenus: { [key: string]: MenuItem[] } = {
-  // Hisar Restaurants
-  "h-res1": [
-    { id: "h1-m1", name: "Paneer Tikka", price: 20 },
-    { id: "h1-m2", name: "Veg Hakka Noodles", price: 18 },
-    { id: "h1-m3", name: "Mushroom Manchurian", price: 22 },
-    { id: "h1-m4", name: "Butter Naan", price: 5 },
-    { id: "h1-m5", name: "Veg Biryani", price: 21 },
-    { id: "h1-m6", name: "Dal Makhani", price: 20 },
-    { id: "h1-m7", name: "Gulab Jamun", price: 9 },
-    { id: "h1-m8", name: "Chicken Curry", price: 28 },
-    { id: "h1-m9", name: "Mix Veg", price: 16 },
-    { id: "h1-m10", name: "Kadhai Paneer", price: 24 },
-    { id: "h1-m11", name: "Lassi", price: 8 },
-    { id: "h1-m12", name: "Tandoori Chicken", price: 32 },
-  ],
-  "h-res2": [
-    { id: "h2-m1", name: "Veg Burger", price: 12 },
-    { id: "h2-m2", name: "French Fries", price: 8 },
-    { id: "h2-m3", name: "Cheese Pizza", price: 25 },
-    { id: "h2-m4", name: "Coke / Pepsi", price: 5 },
-    { id: "h2-m5", name: "Veg Sandwich", price: 15 },
-    { id: "h2-m6", name: "Chicken Burger", price: 18 },
-    { id: "h2-m7", name: "Chicken Nuggets", price: 20 },
-    { id: "h2-m8", name: "Garlic Bread", price: 10 },
-    { id: "h2-m9", name: "Cold Coffee", price: 12 },
-    { id: "h2-m10", name: "Veg Wrap", price: 14 },
-    { id: "h2-m11", name: "Hot Dog", price: 11 },
-    { id: "h2-m12", name: "Onion Rings", price: 9 },
-  ],
-  "h-res3": [
-    { id: "h3-m1", name: "Chicken Biryani", price: 25 },
-    { id: "h3-m2", name: "Tandoori Roti", price: 3 },
-    { id: "h3-m3", name: "Butter Chicken", price: 28 },
-    { id: "h3-m4", name: "Dal Makhani", price: 20 },
-    { id: "h3-m5", name: "Paneer Tikka Masala", price: 25 },
-    { id: "h3-m6", name: "Jeera Rice", price: 12 },
-    { id: "h3-m7", name: "Naan Basket", price: 15 },
-    { id: "h3-m8", name: "Raita", price: 5 },
-    { id: "h3-m9", name: "Chicken Korma", price: 30 },
-    { id: "h3-m10", name: "Mutton Rogan Josh", price: 35 },
-    { id: "h3-m11", name: "Palak Paneer", price: 22 },
-    { id: "h3-m12", name: "Shahi Paneer", price: 24 },
-  ],
-  "h-res4": [
-    { id: "h4-m1", name: "Grilled Chicken", price: 30 },
-    { id: "h4-m2", name: "Barbeque Platter", price: 45 },
-    { id: "h4-m3", name: "Veg Starter Platter", price: 25 },
-    { id: "h4-m4", name: "Mutton Seekh Kebab", price: 35 },
-    { id: "h4-m5", name: "Garlic Naan", price: 8 },
-    { id: "h4-m6", name: "Chocolate Mousse", price: 12 },
-    { id: "h4-m7", name: "Fish Tikka", price: 38 },
-    { id: "h4-m8", name: "Paneer Shashlik", price: 28 },
-    { id: "h4-m9", name: "Veg Biryani", price: 22 },
-    { id: "h4-m10", name: "Crispy Corn", price: 18 },
-    { id: "h4-m11", name: "Brownie with Ice Cream", price: 15 },
-    { id: "h4-m12", name: "Soda", price: 6 },
-  ],
-  "h-res5": [
-    { id: "h5-m1", name: "Kadai Chicken", price: 28 },
-    { id: "h5-m2", name: "Mutton Rogan Josh", price: 35 },
-    { id: "h5-m3", name: "Palak Paneer", price: 22 },
-    { id: "h5-m4", name: "Dal Tadka", price: 18 },
-    { id: "h5-m5", name: "Chicken Biryani", price: 30 },
-    { id: "h5-m6", name: "Tandoori Roti", price: 3 },
-    { id: "h5-m7", name: "Butter Naan", price: 5 },
-    { id: "h5-m8", name: "Kheer", price: 10 },
-    { id: "h5-m9", name: "Masala Papad", price: 7 },
-    { id: "h5-m10", name: "Paneer Butter Masala", price: 25 },
-    { id: "h5-m11", name: "Veg Kofta", price: 20 },
-    { id: "h5-m12", name: "Lassi", price: 8 },
-  ],
-  "h-res6": [
-    { id: "h6-m1", name: "Dal Makhani", price: 20 },
-    { id: "h6-m2", name: "Butter Chicken", price: 30 },
-    { id: "h6-m3", name: "Tandoori Chicken", price: 32 },
-    { id: "h6-m4", name: "Paneer Lababdar", price: 25 },
-    { id: "h6-m5", name: "Mutton Curry", price: 35 },
-    { id: "h6-m6", name: "Mixed Vegetable", price: 18 },
-    { id: "h6-m7", name: "Jeera Rice", price: 12 },
-    { id: "h6-m8", name: "Lachha Paratha", price: 6 },
-    { id: "h6-m9", name: "Gulab Jamun", price: 9 },
-    { id: "h6-m10", name: "Chicken Kebab Platter", price: 40 },
-    { id: "h6-m11", name: "Shahi Paneer", price: 24 },
-    { id: "h6-m12", name: "Boondi Raita", price: 7 },
-  ],
-
-  // Gurugram Restaurants
-  "g-res1": [
-    { id: "g1-m1", name: "Grilled Lamb Chops", price: 50 },
-    { id: "g1-m2", name: "Dal Makhani", price: 25 },
-    { id: "g1-m3", name: "Chicken Seekh Kebab", price: 35 },
-    { id: "g1-m4", name: "Prawns Masala", price: 45 },
-    { id: "g1-m5", name: "Veg Platter", price: 30 },
-    { id: "g1-m6", name: "Butter Chicken", price: 32 },
-    { id: "g1-m7", name: "Tandoori Roti", price: 4 },
-    { id: "g1-m8", name: "Paneer Lababdar", price: 28 },
-    { id: "g1-m9", name: "Mushroom Tikka", price: 26 },
-    { id: "g1-m10", name: "Rogan Josh", price: 40 },
-    { id: "g1-m11", name: "Gulab Jamun", price: 10 },
-    { id: "g1-m12", name: "Mint Mojito", price: 15 },
-  ],
-  "g-res2": [
-    { id: "g2-m1", name: "Chicken & Cheese Sandwich", price: 20 },
-    { id: "g2-m2", name: "Cappuccino", price: 8 },
-    { id: "g2-m3", name: "Pasta Alfredo", price: 28 },
-    { id: "g2-m4", name: "Lemon Iced Tea", price: 6 },
-    { id: "g2-m5", name: "Chocolate Lava Cake", price: 15 },
-    { id: "g2-m6", name: "Grilled Chicken Salad", price: 22 },
-    { id: "g2-m7", name: "Espresso", price: 5 },
-    { id: "g2-m8", name: "Brownie Shake", price: 14 },
-    { id: "g2-m9", name: "Mushroom Pizza", price: 25 },
-    { id: "g2-m10", name: "Fish and Chips", price: 30 },
-    { id: "g2-m11", name: "Onion Rings", price: 10 },
-    { id: "g2-m12", name: "Hot Chocolate", price: 9 },
-  ],
-  "g-res3": [
-    { id: "g3-m1", name: "Champagne Brunch", price: 100 },
-    { id: "g3-m2", name: "Lobster Thermidor", price: 80 },
-    { id: "g3-m3", name: "Truffle Risotto", price: 60 },
-    { id: "g3-m4", name: "Salmon Steak", price: 75 },
-    { id: "g3-m5", name: "Artisanal Cheese Platter", price: 40 },
-    { id: "g3-m6", name: "Rack of Lamb", price: 90 },
-    { id: "g3-m7", name: "Filet Mignon", price: 95 },
-    { id: "g3-m8", name: "Creme Brulee", price: 25 },
-    { id: "g3-m9", name: "Chocolate Fondue", price: 35 },
-    { id: "g3-m10", name: "Caviar Service", price: 150 },
-    { id: "g3-m11", name: "Gourmet Pizza", price: 50 },
-    { id: "g3-m12", name: "Signature Cocktail", price: 20 },
-  ],
-  "g-res4": [
-    { id: "g4-m1", name: "Masala Burger", price: 18 },
-    { id: "g4-m2", name: "Crispy Fries", price: 10 },
-    { id: "g4-m3", name: "Onion Rings", price: 12 },
-    { id: "g4-m4", name: "Chicken Wings", price: 22 },
-    { id: "g4-m5", name: "Veggie Burger", price: 15 },
-    { id: "g4-m6", name: "Pizza Slice", price: 8 },
-    { id: "g4-m7", name: "Hot Dog", price: 11 },
-    { id: "g4-m8", name: "Cold Coffee", price: 14 },
-    { id: "g4-m9", name: "Nachos with Cheese", price: 16 },
-    { id: "g4-m10", name: "Grilled Sandwich", price: 13 },
-    { id: "g4-m11", name: "Iced Tea", price: 7 },
-    { id: "g4-m12", name: "Brownie", price: 9 },
-  ],
-  "g-res5": [
-    { id: "g5-m1", name: "Deconstructed Samosa", price: 25 },
-    { id: "g5-m2", name: "Dal Chawal Arancini", price: 20 },
-    { id: "g5-m3", name: "Galouti Kebab Burger", price: 30 },
-    { id: "g5-m4", name: "Delhi Belly Burger", price: 28 },
-    { id: "g5-m5", name: "Chuski Martini", price: 15 },
-    { id: "g5-m6", name: "Tikki Chat", price: 18 },
-    { id: "g5-m7", name: "Modernist Paneer Tikka", price: 26 },
-    { id: "g5-m8", name: "Butter Chicken Roulade", price: 32 },
-    { id: "g5-m9", name: "Rasmalai Tres Leches", price: 12 },
-    { id: "g5-m10", name: "Mango Lassi", price: 10 },
-    { id: "g5-m11", name: "Chur chur paratha", price: 8 },
-    { id: "g5-m12", name: "Lamb Curry", price: 35 },
-  ],
-  "g-res6": [
-    { id: "g6-m1", name: "LIIT", price: 20 },
-    { id: "g6-m2", name: "Peri Peri Chicken", price: 28 },
-    { id: "g6-m3", name: "Classic Nachos", price: 15 },
-    { id: "g6-m4", name: "Paneer Chilli", price: 22 },
-    { id: "g6-m5", name: "Veg Spring Roll", price: 12 },
-    { id: "g6-m6", name: "Pasta with Pesto Sauce", price: 25 },
-    { id: "g6-m7", name: "Prawns Fry", price: 35 },
-    { id: "g6-m8", name: "Mutton Seekh Kebab", price: 30 },
-    { id: "g6-m9", name: "Chocolate Brownie", price: 10 },
-    { id: "g6-m10", name: "Cocktail", price: 18 },
-    { id: "g6-m11", name: "Mocktail", price: 10 },
-    { id: "g6-m12", name: "Soup", price: 9 },
-  ],
-
-  // Faridabad Restaurants
-  "f-res1": [
-    { id: "f1-m1", name: "Chicken Seekh Kebab", price: 30 },
-    { id: "f1-m2", name: "Tandoori Paneer", price: 25 },
-    { id: "f1-m3", name: "Dal Kabab", price: 20 },
-    { id: "f1-m4", name: "Mutton Boti Kebab", price: 35 },
-    { id: "f1-m5", name: "Chicken Malai Tikka", price: 32 },
-    { id: "f1-m6", name: "Fish Tikka", price: 38 },
-    { id: "f1-m7", name: "Prawns Tandoori", price: 42 },
-    { id: "f1-m8", name: "Garlic Naan", price: 8 },
-    { id: "f1-m9", name: "Butter Roti", price: 5 },
-    { id: "f1-m10", name: "Veg Biryani", price: 24 },
-    { id: "f1-m11", name: "Chicken Curry", price: 28 },
-    { id: "f1-m12", name: "Gulab Jamun", price: 10 },
-  ],
-  "f-res2": [
-    { id: "f2-m1", name: "Raj Kachori", price: 10 },
-    { id: "f2-m2", name: "Chole Bhature", price: 15 },
-    { id: "f2-m3", name: "Samosa", price: 3 },
-    { id: "f2-m4", name: "Pav Bhaji", price: 18 },
-    { id: "f2-m5", name: "Pani Puri", price: 8 },
-    { id: "f2-m6", name: "Dahi Bhalla", price: 12 },
-    { id: "f2-m7", name: "Aloo Tikki", price: 9 },
-    { id: "f2-m8", name: "Kulfi", price: 6 },
-    { id: "f2-m9", name: "Jalebi", price: 7 },
-    { id: "f2-m10", name: "Lassi", price: 8 },
-    { id: "f2-m11", name: "Kheer", price: 10 },
-    { id: "f2-m12", name: "Rasgulla", price: 5 },
-  ],
-  "f-res3": [
-    { id: "f3-m1", name: "Protein Salad", price: 20 },
-    { id: "f3-m2", name: "Grilled Sandwich", price: 15 },
-    { id: "f3-m3", name: "Black Coffee", price: 5 },
-    { id: "f3-m4", name: "Oats Bowl", price: 12 },
-    { id: "f3-m5", name: "Green Smoothie", price: 10 },
-    { id: "f3-m6", name: "Avocado Toast", price: 18 },
-    { id: "f3-m7", name: "Quinoa Bowl", price: 22 },
-    { id: "f3-m8", name: "Mushroom Soup", price: 14 },
-    { id: "f3-m9", name: "Lemon Water", price: 4 },
-    { id: "f3-m10", name: "Fruit Salad", price: 16 },
-    { id: "f3-m11", name: "Hummus & Pita", price: 13 },
-    { id: "f3-m12", name: "Baked Veggies", price: 19 },
-  ],
-  "f-res4": [
-    { id: "f4-m1", name: "Chicken Tikka Masala", price: 28 },
-    { id: "f4-m2", name: "Veg Manchurian", price: 20 },
-    { id: "f4-m3", name: "Dal Makhani", price: 18 },
-    { id: "f4-m4", name: "Prawns in Hot Garlic Sauce", price: 35 },
-    { id: "f4-m5", name: "Paneer Lababdar", price: 24 },
-    { id: "f4-m6", name: "Chicken Biryani", price: 30 },
-    { id: "f4-m7", name: "Naan", price: 4 },
-    { id: "f4-m8", name: "Chicken Chilli", price: 26 },
-    { id: "f4-m9", name: "Veg Pulao", price: 16 },
-    { id: "f4-m10", name: "Spring Rolls", price: 12 },
-    { id: "f4-m11", name: "Gajar Halwa", price: 10 },
-    { id: "f4-m12", name: "Rasgulla", price: 6 },
-  ],
-  "f-res5": [
-    { id: "f5-m1", name: "Chicken Hakka Noodles", price: 20 },
-    { id: "f5-m2", name: "Veg Manchurian", price: 18 },
-    { id: "f5-m3", name: "Chilli Chicken", price: 25 },
-    { id: "f5-m4", name: "Paneer Chilli", price: 22 },
-    { id: "f5-m5", name: "Chicken Fried Rice", price: 24 },
-    { id: "f5-m6", name: "Veg Chowmein", price: 16 },
-    { id: "f5-m7", name: "Spring Rolls", price: 12 },
-    { id: "f5-m8", name: "Wonton Soup", price: 10 },
-    { id: "f5-m9", name: "Chicken Lollipop", price: 28 },
-    { id: "f5-m10", name: "Szechuan Rice", price: 22 },
-    { id: "f5-m11", name: "Honey Chilli Potato", price: 15 },
-    { id: "f5-m12", name: "Virgin Mojito", price: 10 },
-  ],
-  "f-res6": [
-    { id: "f6-m1", name: "Butter Chicken", price: 28 },
-    { id: "f6-m2", name: "Dal Makhani", price: 20 },
-    { id: "f6-m3", name: "Chicken Tikka", price: 25 },
-    { id: "f6-m4", name: "Mutton Rogan Josh", price: 35 },
-    { id: "f6-m5", name: "Shahi Paneer", price: 24 },
-    { id: "f6-m6", name: "Tandoori Roti", price: 3 },
-    { id: "f6-m7", name: "Jeera Rice", price: 12 },
-    { id: "f6-m8", name: "Malai Kofta", price: 22 },
-    { id: "f6-m9", name: "Lassi", price: 7 },
-    { id: "f6-m10", name: "Chicken Biryani", price: 30 },
-    { id: "f6-m11", name: "Paneer Pakoda", price: 15 },
-    { id: "f6-m12", name: "Gulab Jamun", price: 9 },
-  ],
-
-  // Panipat Restaurants
-  "p-res1": [
-    { id: "p1-m1", name: "Shahi Paneer", price: 25 },
-    { id: "p1-m2", name: "Chicken Changezi", price: 30 },
-    { id: "p1-m3", name: "Jeera Rice", price: 12 },
-    { id: "p1-m4", name: "Butter Naan", price: 5 },
-    { id: "p1-m5", name: "Mutton Biryani", price: 35 },
-    { id: "p1-m6", name: "Dal Tadka", price: 18 },
-    { id: "p1-m7", name: "Tandoori Chicken", price: 32 },
-    { id: "p1-m8", name: "Palak Paneer", price: 22 },
-    { id: "p1-m9", name: "Aloo Gobhi", price: 15 },
-    { id: "p1-m10", name: "Chicken Korma", price: 28 },
-    { id: "p1-m11", name: "Rasgulla", price: 8 },
-    { id: "p1-m12", name: "Lassi", price: 7 },
-  ],
-  "p-res2": [
-    { id: "p2-m1", name: "Crispy Chicken Burger", price: 15 },
-    { id: "p2-m2", name: "King Kong Burger", price: 20 },
-    { id: "p2-m3", name: "Onion Rings", price: 8 },
-    { id: "p2-m4", name: "French Fries", price: 7 },
-    { id: "p2-m5", name: "Spicy Paneer Wrap", price: 14 },
-    { id: "p2-m6", name: "Chocolate Shake", price: 10 },
-    { id: "p2-m7", name: "Veggie Supreme Pizza", price: 28 },
-    { id: "p2-m8", name: "Chicken Wings", price: 20 },
-    { id: "p2-m9", name: "Cold Drink", price: 5 },
-    { id: "p2-m10", name: "Corn Dog", price: 11 },
-    { id: "p2-m11", name: "Chicken Popcorn", price: 16 },
-    { id: "p2-m12", name: "Fish Burger", price: 18 },
-  ],
-  "p-res3": [
-    { id: "p3-m1", name: "Thali (Standard)", price: 25 },
-    { id: "p3-m2", name: "Kadai Paneer", price: 22 },
-    { id: "p3-m3", name: "Tandoori Roti", price: 3 },
-    { id: "p3-m4", name: "Lassi", price: 7 },
-    { id: "p3-m5", name: "Masala Dosa", price: 14 },
-    { id: "p3-m6", name: "Idli Sambar", price: 10 },
-    { id: "p3-m7", name: "Puri Bhaji", price: 12 },
-    { id: "p3-m8", name: "Veg Pulao", price: 16 },
-    { id: "p3-m9", name: "Chana Masala", price: 18 },
-    { id: "p3-m10", name: "Naan", price: 4 },
-    { id: "p3-m11", name: "Gulab Jamun", price: 9 },
-    { id: "p3-m12", name: "Fruit Salad", price: 11 },
-  ],
-  "p-res4": [
-    { id: "p4-m1", name: "Craft Beer", price: 15 },
-    { id: "p4-m2", name: "Chicken Wings", price: 20 },
-    { id: "p4-m3", name: "Veg Platter", price: 25 },
-    { id: "p4-m4", name: "Pasta Arrabiata", price: 22 },
-    { id: "p4-m5", name: "Cocktail", price: 18 },
-    { id: "p4-m6", name: "Classic Mojito", price: 12 },
-    { id: "p4-m7", name: "Truffle Fries", price: 14 },
-    { id: "p4-m8", name: "Chicken Tikka Pizza", price: 30 },
-    { id: "p4-m9", name: "Mushroom Bruschetta", price: 16 },
-    { id: "p4-m10", name: "Red Wine", price: 25 },
-    { id: "p4-m11", name: "Dal Makhani", price: 20 },
-    { id: "p4-m12", name: "Brownie", price: 9 },
-  ],
-  "p-res5": [
-    { id: "p5-m1", name: "Margherita Pizza", price: 15 },
-    { id: "p5-m2", name: "Farmhouse Pizza", price: 20 },
-    { id: "p5-m3", name: "Chicken Dominator Pizza", price: 28 },
-    { id: "p5-m4", name: "Garlic Bread", price: 8 },
-    { id: "p5-m5", name: "Choco Lava Cake", price: 10 },
-    { id: "p5-m6", name: "Pepsi / Coke", price: 5 },
-    { id: "p5-m7", name: "Pasta", price: 20 },
-    { id: "p5-m8", name: "Veggie Supreme Pizza", price: 22 },
-    { id: "p5-m9", name: "Stuffed Garlic Bread", price: 12 },
-    { id: "p5-m10", name: "Paneer Pizza", price: 24 },
-    { id: "p5-m11", name: "Tikka Masala Pizza", price: 25 },
-    { id: "p5-m12", name: "Cheesy Dip", price: 4 },
-  ],
-  "p-res6": [
-    { id: "p6-m1", name: "Tandoori Chicken", price: 30 },
-    { id: "p6-m2", name: "Butter Chicken", price: 28 },
-    { id: "p6-m3", name: "Dal Makhani", price: 20 },
-    { id: "p6-m4", name: "Shahi Paneer", price: 24 },
-    { id: "p6-m5", name: "Mutton Biryani", price: 35 },
-    { id: "p6-m6", name: "Paneer Tikka", price: 25 },
-    { id: "p6-m7", name: "Lachha Paratha", price: 6 },
-    { id: "p6-m8", name: "Jeera Rice", price: 12 },
-    { id: "p6-m9", name: "Gulab Jamun", price: 9 },
-    { id: "p6-m10", name: "Veg Pulao", price: 16 },
-    { id: "p6-m11", name: "Chicken Korma", price: 32 },
-    { id: "p6-m12", name: "Lassi", price: 8 },
-  ],
-
-  // Rohtak Restaurants
-  "r-res1": [
-    { id: "r1-m1", name: "Chole Bhature", price: 15 },
-    { id: "r1-m2", name: "Paneer Pakoda", price: 12 },
-    { id: "r1-m3", name: "Gulab Jamun", price: 8 },
-    { id: "r1-m4", name: "Dahi Bhalla", price: 10 },
-    { id: "r1-m5", name: "Samosa", price: 3 },
-    { id: "r1-m6", name: "Aloo Tikki", price: 9 },
-    { id: "r1-m7", name: "Rasmalai", price: 11 },
-    { id: "r1-m8", name: "Chana Kulcha", price: 14 },
-    { id: "r1-m9", name: "Mix Sweet Platter", price: 25 },
-    { id: "r1-m10", name: "Kaju Katli", price: 18 },
-    { id: "r1-m11", name: "Gajar Halwa", price: 16 },
-    { id: "r1-m12", name: "Lassi", price: 7 },
-  ],
-  "r-res2": [
-    { id: "r2-m1", name: "Craft Beer Pint", price: 15 },
-    { id: "r2-m2", name: "Nachos with Salsa", price: 18 },
-    { id: "r2-m3", name: "Chicken Tikka Pizza", price: 30 },
-    { id: "r2-m4", name: "Cocktail", price: 20 },
-    { id: "r2-m5", name: "French Fries", price: 10 },
-    { id: "r2-m6", name: "Veggie Burger", price: 16 },
-    { id: "r2-m7", name: "Chicken Quesadilla", price: 25 },
-    { id: "r2-m8", name: "Mojito", price: 12 },
-    { id: "r2-m9", name: "Pasta Arrabiata", price: 22 },
-    { id: "r2-m10", name: "Onion Rings", price: 9 },
-    { id: "r2-m11", name: "Mushroom Risotto", price: 28 },
-    { id: "r2-m12", name: "Hot Chocolate", price: 11 },
-  ],
-  "r-res3": [
-    { id: "r3-m1", name: "Margherita Pizza", price: 20 },
-    { id: "r3-m2", name: "Pepsi / Coke", price: 5 },
-    { id: "r3-m3", name: "Garlic Bread Sticks", price: 10 },
-    { id: "r3-m4", name: "Chicken Supreme Pizza", price: 30 },
-    { id: "r3-m5", name: "Veggie Delight Pizza", price: 25 },
-    { id: "r3-m6", name: "Taco", price: 15 },
-    { id: "r3-m7", name: "Hot Dog", price: 12 },
-    { id: "r3-m8", name: "Cheesy Fries", price: 14 },
-    { id: "r3-m9", name: "Chocolate Shake", price: 11 },
-    { id: "r3-m10", name: "Onion Pizza", price: 18 },
-    { id: "r3-m11", name: "Pasta", price: 22 },
-    { id: "r3-m12", name: "Brownie", price: 9 },
-  ],
-  "r-res4": [
-    { id: "r4-m1", name: "Dal Makhani", price: 18 },
-    { id: "r4-m2", name: "Shahi Paneer", price: 24 },
-    { id: "r4-m3", name: "Chicken Biryani", price: 28 },
-    { id: "r4-m4", name: "Mushroom Chilli", price: 20 },
-    { id: "r4-m5", name: "Veg Manchurian", price: 18 },
-    { id: "r4-m6", name: "Tandoori Roti", price: 3 },
-    { id: "r4-m7", name: "Paneer Tikka", price: 22 },
-    { id: "r4-m8", name: "Hakka Noodles", price: 16 },
-    { id: "r4-m9", name: "Malai Kofta", price: 25 },
-    { id: "r4-m10", name: "Chicken Korma", price: 30 },
-    { id: "r4-m11", name: "Rasgulla", price: 8 },
-    { id: "r4-m12", name: "Lassi", price: 7 },
-  ],
-  "r-res5": [
-    { id: "r5-m1", name: "Lamb Rogan Josh", price: 40 },
-    { id: "r5-m2", name: "Butter Chicken", price: 32 },
-    { id: "r5-m3", name: "Dal Bukhara", price: 25 },
-    { id: "r5-m4", name: "Prawns Curry", price: 45 },
-    { id: "r5-m5", name: "Paneer Tikka Masala", price: 28 },
-    { id: "r5-m6", name: "Jeera Rice", price: 12 },
-    { id: "r5-m7", name: "Assorted Breads", price: 15 },
-    { id: "r5-m8", name: "Gulab Jamun", price: 10 },
-    { id: "r5-m9", name: "Kheer", price: 11 },
-    { id: "r5-m10", name: "Tandoori Mushroom", price: 24 },
-    { id: "r5-m11", name: "Lassi", price: 8 },
-    { id: "r5-m12", name: "Mutton Seekh Kebab", price: 35 },
-  ],
-  "r-res6": [
-    { id: "r6-m1", name: "Aloo Paratha", price: 10 },
-    { id: "r6-m2", name: "Dal Tadka", price: 15 },
-    { id: "r6-m3", name: "Chicken Curry", price: 25 },
-    { id: "r6-m4", name: "Tandoori Roti", price: 3 },
-    { id: "r6-m5", name: "Paneer Butter Masala", price: 20 },
-    { id: "r6-m6", name: "Jeera Rice", price: 12 },
-    { id: "r6-m7", name: "Onion Salad", price: 5 },
-    { id: "r6-m8", name: "Lassi", price: 7 },
-    { id: "r6-m9", name: "Mutton Rogan Josh", price: 32 },
-    { id: "r6-m10", name: "Mix Veg", price: 18 },
-    { id: "r6-m11", name: "Egg Curry", price: 16 },
-    { id: "r6-m12", name: "Gulab Jamun", price: 9 },
-  ],
-
-  // Sirsa Restaurants
-  "s-res1": [
-    { id: "s1-m1", name: "Amritsari Kulcha", price: 10 },
-    { id: "s1-m2", name: "Chole", price: 8 },
-    { id: "s1-m3", name: "Lassi", price: 7 },
-    { id: "s1-m4", name: "Pyaaz Paratha", price: 12 },
-    { id: "s1-m5", name: "Paneer Kulcha", price: 15 },
-    { id: "s1-m6", name: "Aloo Kulcha", price: 11 },
-    { id: "s1-m7", name: "Gobi Kulcha", price: 11 },
-    { id: "s1-m8", name: "Dahi", price: 5 },
-    { id: "s1-m9", name: "Butter Milk", price: 6 },
-    { id: "s1-m10", name: "Mix Paratha", price: 13 },
-    { id: "s1-m11", name: "Tandoori Roti", price: 3 },
-    { id: "s1-m12", name: "Papad", price: 2 },
-  ],
-  "s-res2": [
-    { id: "s2-m1", name: "Shahi Paneer", price: 22 },
-    { id: "s2-m2", name: "Dal Makhani", price: 18 },
-    { id: "s2-m3", name: "Veg Biryani", price: 20 },
-    { id: "s2-m4", name: "Butter Naan", price: 5 },
-    { id: "s2-m5", name: "Mushroom Tikka", price: 18 },
-    { id: "s2-m6", name: "Kadhai Paneer", price: 24 },
-    { id: "s2-m7", name: "Jeera Rice", price: 12 },
-    { id: "s2-m8", name: "Veg Platter", price: 30 },
-    { id: "s2-m9", name: "Malai Kofta", price: 25 },
-    { id: "s2-m10", name: "Gulab Jamun", price: 9 },
-    { id: "s2-m11", name: "Lassi", price: 8 },
-    { id: "s2-m12", name: "Chur Chur Naan", price: 7 },
-  ],
-  "s-res3": [
-    { id: "s3-m1", name: "Tandoori Chicken", price: 30 },
-    { id: "s3-m2", name: "Chicken Biryani", price: 28 },
-    { id: "s3-m3", name: "Butter Chicken", price: 25 },
-    { id: "s3-m4", name: "Mutton Rogan Josh", price: 35 },
-    { id: "s3-m5", name: "Paneer Tikka", price: 20 },
-    { id: "s3-m6", name: "Dal Makhani", price: 18 },
-    { id: "s3-m7", name: "Garlic Naan", price: 6 },
-    { id: "s3-m8", name: "Kadhai Paneer", price: 22 },
-    { id: "s3-m9", name: "Fish Curry", price: 32 },
-    { id: "s3-m10", name: "Veg Pulao", price: 16 },
-    { id: "s3-m11", name: "Gulab Jamun", price: 9 },
-    { id: "s3-m12", name: "Lassi", price: 8 },
-  ],
-  "s-res4": [
-    { id: "s4-m1", name: "Butter Chicken", price: 28 },
-    { id: "s4-m2", name: "Chicken Tikka", price: 25 },
-    { id: "s4-m3", name: "Mutton Rogan Josh", price: 35 },
-    { id: "s4-m4", name: "Tandoori Chicken", price: 30 },
-    { id: "s4-m5", name: "Dal Makhani", price: 20 },
-    { id: "s4-m6", name: "Kadai Paneer", price: 22 },
-    { id: "s4-m7", name: "Naan", price: 4 },
-    { id: "s4-m8", name: "Chicken Biryani", price: 30 },
-    { id: "s4-m9", name: "Mutton Seekh Kebab", price: 32 },
-    { id: "s4-m10", name: "Shahi Paneer", price: 24 },
-    { id: "s4-m11", name: "Lassi", price: 7 },
-    { id: "s4-m12", name: "Gulab Jamun", price: 9 },
-  ],
-  "s-res5": [
-    { id: "s5-m1", name: "Veg Manchurian", price: 18 },
-    { id: "s5-m2", name: "Chicken Chilli", price: 25 },
-    { id: "s5-m3", name: "Paneer Tikka Masala", price: 22 },
-    { id: "s5-m4", name: "Dal Makhani", price: 20 },
-    { id: "s5-m5", name: "Chicken Biryani", price: 28 },
-    { id: "s5-m6", name: "Butter Naan", price: 5 },
-    { id: "s5-m7", name: "Prawns Curry", price: 35 },
-    { id: "s5-m8", name: "Mutton Rogan Josh", price: 32 },
-    { id: "s5-m9", name: "Veg Pulao", price: 16 },
-    { id: "s5-m10", name: "Tandoori Chicken", price: 30 },
-    { id: "s5-m11", name: "Lassi", price: 8 },
-    { id: "s5-m12", name: "Brownie", price: 12 },
-  ],
-  "s-res6": [
-    { id: "s6-m1", name: "Chicken Fajitas", price: 30 },
-    { id: "s6-m2", name: "Burrito Bowl", price: 25 },
-    { id: "s6-m3", name: "Classic Margarita", price: 15 },
-    { id: "s6-m4", name: "Nachos Supreme", price: 20 },
-    { id: "s6-m5", name: "Quesadilla", price: 18 },
-    { id: "s6-m6", name: "Chicken Wings", price: 22 },
-    { id: "s6-m7", name: "Tacos", price: 16 },
-    { id: "s6-m8", name: "Guacamole", price: 10 },
-    { id: "s6-m9", name: "Chilli Con Carne", price: 28 },
-    { id: "s6-m10", name: "Churros", price: 12 },
-    { id: "s6-m11", name: "Enchiladas", price: 24 },
-    { id: "s6-m12", name: "Soft Drink", price: 5 },
-  ],
-
-  // Chandigarh Restaurants
-  "c-res1": [
-    { id: "c1-m1", name: "Margherita Pizza", price: 20 },
-    { id: "c1-m2", name: "Pasta Alfredo", price: 25 },
-    { id: "c1-m3", name: "Tiramisu", price: 15 },
-    { id: "c1-m4", name: "Bruschetta", price: 12 },
-    { id: "c1-m5", name: "Lasagna", price: 28 },
-    { id: "c1-m6", name: "Panna Cotta", price: 10 },
-    { id: "c1-m7", name: "Caesar Salad", price: 18 },
-    { id: "c1-m8", name: "Mushroom Risotto", price: 22 },
-    { id: "c1-m9", name: "Gnocchi", price: 24 },
-    { id: "c1-m10", name: "Espresso", price: 5 },
-    { id: "c1-m11", name: "Mojito", price: 12 },
-    { id: "c1-m12", name: "Red Wine", price: 20 },
-  ],
-  "c-res2": [
-    { id: "c2-m1", name: "Dal Makhani", price: 20 },
-    { id: "c2-m2", name: "Butter Chicken", price: 28 },
-    { id: "c2-m3", name: "Mojito", price: 12 },
-    { id: "c2-m4", name: "Chicken Tikka", price: 25 },
-    { id: "c2-m5", name: "Veg Platter", price: 22 },
-    { id: "c2-m6", name: "French Fries", price: 10 },
-    { id: "c2-m7", name: "Cocktail", price: 18 },
-    { id: "c2-m8", name: "Pizza", price: 25 },
-    { id: "c2-m9", name: "Paneer Chilli", price: 20 },
-    { id: "c2-m10", name: "Brownie with Ice Cream", price: 15 },
-    { id: "c2-m11", name: "Lassi", price: 8 },
-    { id: "c2-m12", name: "Spring Rolls", price: 14 },
-  ],
-  "c-res3": [
-    { id: "c3-m1", name: "Butter Chicken", price: 28 },
-    { id: "c3-m2", name: "Dal Makhani", price: 20 },
-    { id: "c3-m3", name: "Tandoori Roti", price: 3 },
-    { id: "c3-m4", name: "Mutton Rogan Josh", price: 35 },
-    { id: "c3-m5", name: "Shahi Paneer", price: 24 },
-    { id: "c3-m6", name: "Chicken Biryani", price: 30 },
-    { id: "c3-m7", name: "Lachha Paratha", price: 6 },
-    { id: "c3-m8", name: "Mix Veg", price: 18 },
-    { id: "c3-m9", name: "Jeera Rice", price: 12 },
-    { id: "c3-m10", name: "Paneer Tikka Masala", price: 25 },
-    { id: "c3-m11", name: "Lassi", price: 7 },
-    { id: "c3-m12", name: "Gulab Jamun", price: 9 },
-  ],
-  "c-res4": [
-    { id: "c4-m1", name: "Craft Beer", price: 15 },
-    { id: "c4-m2", name: "Chicken Tikka Pizza", price: 30 },
-    { id: "c4-m3", name: "Nachos with Salsa", price: 18 },
-    { id: "c4-m4", name: "Veg Burger", price: 16 },
-    { id: "c4-m5", name: "Mojito", price: 12 },
-    { id: "c4-m6", name: "Pasta Alfredo", price: 25 },
-    { id: "c4-m7", name: "Chicken Wings", price: 22 },
-    { id: "c4-m8", name: "Onion Rings", price: 9 },
-    { id: "c4-m9", name: "Truffle Fries", price: 14 },
-    { id: "c4-m10", name: "Cocktail", price: 20 },
-    { id: "c4-m11", name: "Brownie", price: 10 },
-    { id: "c4-m12", name: "Coffee", price: 8 },
-  ],
-  "c-res5": [
-    { id: "c5-m1", name: "Masala Dosa", price: 12 },
-    { id: "c5-m2", name: "Dal Makhani", price: 18 },
-    { id: "c5-m3", name: "Paneer Butter Masala", price: 22 },
-    { id: "c5-m4", name: "Rava Dosa", price: 14 },
-    { id: "c5-m5", name: "Idli Sambar", price: 10 },
-    { id: "c5-m6", name: "Chole Bhature", price: 15 },
-    { id: "c5-m7", name: "Veg Biryani", price: 20 },
-    { id: "c5-m8", name: "Sambar Vada", price: 10 },
-    { id: "c5-m9", name: "Thali (South Indian)", price: 25 },
-    { id: "c5-m10", name: "Tandoori Roti", price: 3 },
-    { id: "c5-m11", name: "Gulab Jamun", price: 9 },
-    { id: "c5-m12", name: "Lassi", price: 7 },
-  ],
-  "c-res6": [
-    { id: "c6-m1", name: "Chole Bhature", price: 15 },
-    { id: "c6-m2", name: "Paneer Pakoda", price: 12 },
-    { id: "c6-m3", name: "Gulab Jamun", price: 8 },
-    { id: "c6-m4", name: "Dahi Bhalla", price: 10 },
-    { id: "c6-m5", name: "Samosa", price: 3 },
-    { id: "c6-m6", name: "Aloo Tikki", price: 9 },
-    { id: "c6-m7", name: "Rasmalai", price: 11 },
-    { id: "c6-m8", name: "Chana Kulcha", price: 14 },
-    { id: "c6-m9", name: "Mix Sweet Platter", price: 25 },
-    { id: "c6-m10", name: "Kaju Katli", price: 18 },
-    { id: "c6-m11", name: "Gajar Halwa", price: 16 },
-    { id: "c6-m12", name: "Lassi", price: 7 },
-  ],
-};
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Await the params to resolve the promise
-    const { id } = await params;
+    await connect();
+    const params = await context.params;
+    const restaurantId = params.id;
 
-    const menu = mockMenus[id];
-    if (!menu) {
-      return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
+    const restaurant = await Restaurant.findById(restaurantId).select("menu");
+    if (!restaurant) {
+      return NextResponse.json({ message: "Restaurant not found" }, { status: 404 });
     }
 
-    return NextResponse.json(menu);
-  } catch (error) {
+    return NextResponse.json({ menu: restaurant.menu }, { status: 200 });
+  } catch (error: any) {
+    console.error("Error fetching menu:", error.message);
     return NextResponse.json(
-      { error: "Failed to fetch menu" },
+      { message: "Server error", error: error.message },
       { status: 500 }
     );
   }
