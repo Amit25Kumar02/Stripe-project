@@ -47,25 +47,43 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
   const [selectedPlan, setSelectedPlan] = useState<keyof typeof subscriptionPlans>("basic");
   const searchParams = useSearchParams();
 
-const handlePaymentSuccess = async () => {
-  try {
-    const decodedItems = searchParams.get("items");
-    if (!decodedItems) throw new Error("No cart items found.");
+  const handlePaymentSuccess = async () => {
+    try {
+      const decodedItems = searchParams.get("items");
+      if (!decodedItems) throw new Error("No cart items found.");
 
-   // In handlePaymentSuccess
-await axios.post("/api/orders", {
-  id: Date.now().toString(),
-  date: new Date().toLocaleString(),
-  items: JSON.parse(decodeURIComponent(decodedItems)),
-  amount: parseFloat(amount.toFixed(2)),
-});
+      const parsedItems = JSON.parse(decodeURIComponent(decodedItems));
 
-    router.push("/order-history"); // redirect after saving
-  } catch (e: any) {
-    console.error("Failed to save order to MongoDB", e);
-    setPaymentError("Order could not be saved. Please contact support.");
-  }
-};
+      // Validate items structure
+      const validatedItems = parsedItems.map((item: { id?: string; name?: string; price?: number | string; quantity?: number | string }, index: number) => ({
+        id: item.id || `item-${Date.now()}-${index}`,
+        name: item.name || "Unknown Item",
+        price: Number(item.price) || 0,
+        quantity: Number(item.quantity) || 1
+      }));
+
+      const orderData = {
+        id: Date.now().toString(),
+        date: new Date().toLocaleString(),
+        items: validatedItems,
+        amount: parseFloat(amount.toFixed(2)),
+        orderStatus: "ordered",
+      };
+
+      console.log("Saving order:", orderData);
+
+      const response = await axios.post("/api/orders", orderData);
+
+      if (response.data.success) {
+        router.push("/order-history");
+      } else {
+        throw new Error(response.data.error || "Failed to save order");
+      }
+    } catch (e: any) {
+      console.error("Failed to save order:", e.response?.data || e.message);
+      setPaymentError(`Order could not be saved: ${e.response?.data?.error || e.message}`);
+    }
+  };
 
 
 
@@ -75,7 +93,7 @@ await axios.post("/api/orders", {
     if (paymentSuccess) {
       handlePaymentSuccess();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentSuccess]); // Only depends on paymentSuccess
 
   const handleSubmit = async (e: React.FormEvent) => {

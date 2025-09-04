@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Home as HomeIcon, Utensils, CreditCard, Menu as MenuIcon, X as CloseIcon, ClipboardListIcon} from 'lucide-react';
 import React, { useState } from 'react';
+import LiveChatWidget from './components/LiveChatWidget';
 
 export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -25,6 +26,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
+      <LiveChatWidget />
       {/* Mobile Sidebar Toggle Button */}
       <button
         className="lg:hidden fixed top-4 left-4 bg-blue-600 text-white p-2 rounded-full shadow-lg z-50 focus:outline-none focus:ring-2 focus:ring-blue-300"

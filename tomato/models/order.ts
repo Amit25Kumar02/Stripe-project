@@ -1,17 +1,41 @@
 import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema({
-  id: { type: String, required: true },
-  date: { type: String, required: true },
+  date: {
+    type: String,
+    required: true
+  },
   items: [
     {
-      id: { type: String, required: true },
-      name: { type: String, required: true },
-      price: { type: Number, required: true },
-      quantity: { type: Number, required: true },
+      id: {
+        type: String,
+        required: true
+      },
+      name: {
+        type: String,
+        required: true
+      },
+      price: {
+        type: Number,
+        required: true
+      },
+      quantity: {
+        type: Number,
+        required: true
+      },
     },
   ],
-  amount: { type: Number, required: true }, // make sure this matches the field in your JSON
+  amount: {
+    type: Number,
+    required: true
+  },
+  // Update the enum to include 'in process'
+  orderStatus: {
+    type: String,
+    enum: ["ordered", "in process", "delivered"],
+    default: "ordered",
+    required: true,
+  },
 });
 
 export default mongoose.models.Order || mongoose.model("Order", orderSchema);

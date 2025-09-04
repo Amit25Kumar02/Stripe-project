@@ -12,6 +12,9 @@ import {
   ShoppingCart,
   ClipboardListIcon,
   ReceiptText,
+  Truck,
+  CheckCircle,
+  Clock
 } from "lucide-react";
 import NextLink from "next/link";
 
@@ -26,6 +29,7 @@ interface Order {
   items: OrderItem[];
   amount: number;
   date: string;
+  orderStatus: "ordered" | "delivered"; // Add orderStatus field
 }
 
 export default function OrdersPage() {
@@ -40,6 +44,7 @@ export default function OrdersPage() {
       try {
         const response = await axios.get("/api/orders");
         if (response.data.success) {
+          // Assuming your backend now returns the 'orderStatus' field
           setOrders(response.data.orders);
         } else {
           setError("Failed to load orders");
@@ -47,13 +52,47 @@ export default function OrdersPage() {
       } catch (err) {
         setError("Network error");
       } finally {
-          setLoading(false);
+        setLoading(false);
       }
     };
     fetchOrders();
   }, []);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Helper function to get status badge style
+  const getStatusStyle = (status: "ordered" | "in process" | "delivered") => {
+    switch (status) {
+      case "in process":
+        return {
+          text: "In Process",
+          color: "text-blue-600",
+          bgColor: "bg-blue-100",
+          icon: <Clock size={16} className="mr-1" />,
+        };
+      case "ordered":
+        return {
+          text: "Ordered",
+          color: "text-yellow-600",
+          bgColor: "bg-yellow-100",
+          icon: <Truck size={16} className="mr-1" />,
+        };
+      case "delivered":
+        return {
+          text: "Delivered",
+          color: "text-green-600",
+          bgColor: "bg-green-100",
+          icon: <CheckCircle size={16} className="mr-1" />,
+        };
+      default:
+        return {
+          text: "Unknown",
+          color: "text-gray-600",
+          bgColor: "bg-gray-100",
+          icon: null,
+        };
+    }
+  };
 
   return (
     <div className="min-h-screen flex bg-gray-50 text-gray-900">
@@ -68,9 +107,8 @@ export default function OrdersPage() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
+        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
       >
         <h2 className="text-3xl font-extrabold text-gray-900 mb-6 flex items-center">
           <span className="text-red-500 mr-2">Tomato</span> 🍔
@@ -116,7 +154,7 @@ export default function OrdersPage() {
             <li>
               <NextLink
                 href="/order-history"
-                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg bg-gray-100 "
+                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg bg-gray-100"
                 onClick={() => setIsSidebarOpen(false)}
               >
                 <ClipboardListIcon size={20} className="mr-3 text-blue-600" /> Order History
@@ -130,73 +168,102 @@ export default function OrdersPage() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 lg:ml-64 p-6 lg:p-12 relative overflow-hidden bg-gradient-to-br from-indigo-50 to-purple-50">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-center mb-12 relative z-10 bg-clip-text from-blue-600  drop-shadow-[0_4px_10px_rgba(0,0,0,0.2)]">
-          📦 My Order History
-        </h1>
+      <main className="flex-1 lg:ml-64 p-6 lg:p-12 relative overflow-hidden bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
+        {/* Page Title */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 drop-shadow-lg">
+            📦 My Order History
+          </h1>
+          <p className="mt-3 text-gray-600 text-lg">Track and manage all your past orders here</p>
+        </div>
 
         {loading ? (
           <div className="space-y-6 max-w-4xl mx-auto">
             {Array.from({ length: 3 }).map((_, idx) => (
               <div
                 key={idx}
-                className="bg-white p-6 rounded-2xl animate-pulse h-40 shadow-xl"
+                className="bg-white/70 backdrop-blur-md p-6 rounded-2xl animate-pulse h-40 shadow-xl"
               ></div>
             ))}
           </div>
         ) : error ? (
           <p className="text-center text-red-600 font-semibold max-w-4xl mx-auto">{error}</p>
         ) : orders.length === 0 ? (
-          <div className="relative z-10 flex flex-col items-center justify-center py-20 bg-white rounded-2xl shadow-xl border border-gray-200 max-w-4xl mx-auto">
-            <ClipboardListIcon size={64} className="text-gray-400 mb-4 animate-pulse" />
-            <p className="text-xl text-gray-600 font-medium">
-              You haven&apos;t placed any orders yet.
-            </p>
-            <p className="text-gray-500 mt-2">
-              Start by ordering from your favorite restaurant!
-            </p>
+          <div className="relative z-10 flex flex-col items-center justify-center py-20 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-200 max-w-3xl mx-auto">
+            <ClipboardListIcon size={72} className="text-indigo-400 mb-6 animate-bounce" />
+            <p className="text-2xl font-semibold text-gray-700">No Orders Yet</p>
+            <p className="text-gray-500 mt-2">Start by ordering from your favorite restaurant 🍴</p>
+            <NextLink
+              href="/restaurants"
+              className="mt-6 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg transition-transform hover:scale-105"
+            >
+              Explore Restaurants
+            </NextLink>
           </div>
         ) : (
           <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-            {orders.map((order) => (
-              <div
-                key={order._id}
-                className="relative bg-white rounded-2xl shadow-xl p-6 border border-gray-200 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:ring-2 hover:ring-blue-500"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gray-800 flex items-center">
-                    <ReceiptText size={24} className="text-blue-500 mr-2" />
-                    Order #<span className="text-gray-600 font-normal">{order._id.slice(-6)}</span>
-                  </h2>
-                  <span className="text-sm font-medium text-gray-500">
-                    {new Date(order.date).toLocaleDateString()}
-                  </span>
-                </div>
-                
-                <ul className="space-y-3 mb-4 text-gray-700">
-                  {order.items.map((item, idx) => (
-                    <li key={idx} className="flex justify-between items-center text-base">
-                      <span className="font-medium text-gray-800">{item.name}</span>
-                      <span className="text-gray-500">
-                        {item.quantity} x ${item.price.toFixed(2)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+            {orders.map((order) => {
+              const status = getStatusStyle(order.orderStatus);
 
-                <div className="flex justify-between items-center border-t border-gray-200 pt-4">
-                  <p className="font-semibold text-lg text-gray-800">
-                    Total:
-                  </p>
-                  <p className="font-extrabold text-xl text-green-600">
-                    ${order.amount.toFixed(2)}
-                  </p>
+              return (
+                <div
+                  key={order._id}
+                  className="group relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
+                >
+                  {/* Card Header */}
+                  <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-100">
+                    <div>
+                      <h2 className="text-sm font-semibold text-gray-600">Order ID</h2>
+                      <p className="text-lg font-bold text-gray-800">
+                        #{order._id.slice(-6)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500">
+                        {new Date(order.date).toLocaleDateString()}
+                      </p>
+                      <span
+                        className={`inline-flex items-center mt-1 px-3 py-1 rounded-full text-sm font-semibold shadow-sm ${status.bgColor} ${status.color}`}
+                      >
+                        {status.icon}
+                        {status.text}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Order Items */}
+                  <ul className="divide-y divide-gray-100 px-5 py-4">
+                    {order.items.map((item, idx) => (
+                      <li
+                        key={idx}
+                        className="flex justify-between items-center py-2 text-gray-700"
+                      >
+                        <span className="font-medium">{item.name}</span>
+                        <span className="text-sm text-gray-500">
+                          {item.quantity} × ${item.price.toFixed(2)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between px-5 py-4 bg-gray-50 border-t border-gray-100">
+                    <p className="font-semibold text-gray-700">Total</p>
+                    <p className="font-extrabold text-xl text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-600">
+                      ${order.amount.toFixed(2)}
+                    </p>
+                  </div>
+
+                  {/* Subtle hover glow */}
+                  <div className="absolute inset-0 rounded-2xl ring-2 ring-transparent group-hover:ring-indigo-200 transition"></div>
                 </div>
-              </div>
-            ))}
+
+              );
+            })}
           </div>
         )}
       </main>
+
 
       {/* Mobile overlay */}
       {isSidebarOpen && (

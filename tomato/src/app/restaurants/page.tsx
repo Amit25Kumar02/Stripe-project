@@ -38,6 +38,14 @@ interface Restaurant {
   distance?: number;
 }
 
+interface SavedLocation {
+  latitude: number;
+  longitude: number;
+  type: 'user' | 'manual';
+  timestamp: number;
+  query?: string;
+}
+
 const categories = [
   { name: 'Home', href: '/', icon: <HomeIcon size={20} /> },
   { name: 'All Restaurants', filter: 'all', icon: <Utensils size={20} /> },
@@ -141,7 +149,27 @@ export default function RestaurantsPage() {
 
   useEffect(() => {
     setMounted(true);
+    // Load saved location from localStorage
+    const savedLocation = localStorage.getItem('savedLocation');
+    if (savedLocation) {
+      const locationData: SavedLocation = JSON.parse(savedLocation);
+      if (locationData.type === 'user') {
+        setUserLocation({ latitude: locationData.latitude, longitude: locationData.longitude });
+        setUserLocationClicked(true);
+      } else if (locationData.type === 'manual') {
+        if (locationData.latitude && locationData.longitude) {
+          setManualMapLocation({ latitude: locationData.latitude, longitude: locationData.longitude });
+          setManualLocationClicked(true);
+        } else if (locationData.query) {
+          setManualLocationQuery(locationData.query);
+        }
+      }
+    }
   }, []);
+
+  const saveLocationToStorage = (locationData: SavedLocation) => {
+    localStorage.setItem('savedLocation', JSON.stringify(locationData));
+  };
 
   const fetchUserLocation = () => {
     setLocationLoading(true);
@@ -149,13 +177,23 @@ export default function RestaurantsPage() {
     setManualMapLocation(null);
     setManualLocationQuery('');
     setUserLocationClicked(true);
-    setManualLocationClicked(true);
+    setManualLocationClicked(false);
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation({ latitude, longitude });
+          
+          // Save to localStorage
+          const locationData: SavedLocation = {
+            latitude,
+            longitude,
+            type: 'user',
+            timestamp: Date.now()
+          };
+          saveLocationToStorage(locationData);
+          
           setLocationLoading(false);
         },
         (error) => {
@@ -170,70 +208,70 @@ export default function RestaurantsPage() {
     }
   };
 
- const fetchRestaurants = async (
-  lat?: number,
-  lon?: number,
-  textQuery?: string,
-  filter?: string,
-  radius?: number | 'all'
-) => {
-  try {
-    setLoading(true);
-    setError(null);
+  const fetchRestaurants = async (
+    lat?: number,
+    lon?: number,
+    textQuery?: string,
+    filter?: string,
+    radius?: number | 'all'
+  ) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    const params: Record<string, any> = {};
+      const params: Record<string, any> = {};
 
-    if (lat && lon) {
-      params.lat = lat;
-      params.lon = lon;
-    } else if (textQuery) {
-      params.q = textQuery;
-    }
-
-    const response = await axios.get<Restaurant[]>("/api/restaurants/nearby", { params });
-
-    let filteredData = response.data;
-    const centerLocation = userLocation || manualMapLocation;
-
-    if (centerLocation) {
-      filteredData = filteredData.map((restaurant) => ({
-        ...restaurant,
-        distance: haversineDistance(
-          centerLocation.latitude,
-          centerLocation.longitude,
-          restaurant.latitude,
-          restaurant.longitude
-        ),
-      }));
-
-      if (radius !== "all" && typeof radius === "number") {
-        filteredData = filteredData.filter((r) => r.distance! <= radius);
+      if (lat && lon) {
+        params.lat = lat;
+        params.lon = lon;
+      } else if (textQuery) {
+        params.q = textQuery;
       }
-    }
 
-    if (filter && filter !== "all") {
-      if (filter === "popular") {
-        filteredData = filteredData.filter((r) => r.rating >= 4.5);
-      } else if (filter === "new") {
-        filteredData = filteredData.slice(-5); // Assuming last 5 are new arrivals
-      } else {
-        filteredData = filteredData.filter((r) =>
-          r.cuisine.toLowerCase().includes(filter)
-        );
+      const response = await axios.get<Restaurant[]>("/api/restaurants/nearby", { params });
+
+      let filteredData = response.data;
+      const centerLocation = userLocation || manualMapLocation;
+
+      if (centerLocation) {
+        filteredData = filteredData.map((restaurant) => ({
+          ...restaurant,
+          distance: haversineDistance(
+            centerLocation.latitude,
+            centerLocation.longitude,
+            restaurant.latitude,
+            restaurant.longitude
+          ),
+        }));
+
+        if (radius !== "all" && typeof radius === "number") {
+          filteredData = filteredData.filter((r) => r.distance! <= radius);
+        }
       }
-    }
 
-    if (centerLocation) {
-      filteredData.sort((a, b) => a.distance! - b.distance!);
-    }
+      if (filter && filter !== "all") {
+        if (filter === "popular") {
+          filteredData = filteredData.filter((r) => r.rating >= 4.5);
+        } else if (filter === "new") {
+          filteredData = filteredData.slice(-5); // Assuming last 5 are new arrivals
+        } else {
+          filteredData = filteredData.filter((r) =>
+            r.cuisine.toLowerCase().includes(filter)
+          );
+        }
+      }
 
-    setRestaurants(filteredData);
-  } catch (err: any) {
-    setError(err.message || "Failed to fetch restaurants.");
-  } finally {
-    setLoading(false);
-  }
-};
+      if (centerLocation) {
+        filteredData.sort((a, b) => a.distance! - b.distance!);
+      }
+
+      setRestaurants(filteredData);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch restaurants.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!mounted) return;
@@ -261,10 +299,20 @@ export default function RestaurantsPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setUserLocation(null);
-    setManualMapLocation(null);
-    setManualSearchMode(false);
-    setActiveFilter('all');
+    if (manualLocationQuery.trim()) {
+      // Save search query to localStorage
+      const locationData: SavedLocation = {
+        type: 'manual',
+        query: manualLocationQuery,
+        timestamp: Date.now()
+      } as SavedLocation;
+      saveLocationToStorage(locationData);
+      
+      setUserLocation(null);
+      setManualMapLocation(null);
+      setManualSearchMode(false);
+      setActiveFilter('all');
+    }
   };
 
   const handleFilterClick = (filter: string) => {
@@ -274,10 +322,20 @@ export default function RestaurantsPage() {
 
   const handleMapClick = (lat: number, lng: number) => {
     setManualMapLocation({ latitude: lat, longitude: lng });
+    
+    // Save manual map location to localStorage
+    const locationData: SavedLocation = {
+      latitude: lat,
+      longitude: lng,
+      type: 'manual',
+      timestamp: Date.now()
+    };
+    saveLocationToStorage(locationData);
+    
     setUserLocation(null);
     setManualLocationQuery('');
     setUserLocationClicked(false);
-    setManualLocationClicked(false);
+    setManualLocationClicked(true);
   };
 
   const handleManualMapSearch = () => {

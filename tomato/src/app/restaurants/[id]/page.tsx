@@ -293,14 +293,14 @@ export default function RestaurantMenuPage() {
             </div>
 
             {/* Restaurant Header Section */}
-            <div className="relative h-64 w-full rounded-2xl overflow-hidden shadow-lg mb-8">
+            <div className="relative h-72 w-full text-white rounded-2xl overflow-hidden shadow-xl mb-10 group transition-transform duration-300 hover:scale-[1.02] hover:shadow-2xl">
               <Image
-                src={restaurant.imageUrl || `https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
+                src={`https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
                   restaurant.name
                 )}`}
                 alt={restaurant.name}
                 fill
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-105"
                 unoptimized
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
@@ -310,35 +310,46 @@ export default function RestaurantMenuPage() {
                   )}`;
                 }}
               />
-              {/* Overlay with increased blackness */}
-              <div className="absolute inset-0 bg-black/60 flex items-end p-6"> {/* Changed opacity to 60% */}
-                <div className="text-white w-full"> {/* Added w-full here */}
-                  <h1 className="text-4xl font-extrabold mb-1 drop-shadow-md">{restaurant.name}</h1>
-                  <p className="text-lg font-light flex items-center mb-1">
-                    <Utensils size={18} className="mr-2" />
-                    {restaurant.cuisine}
+
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+
+              {/* Content Overlay */}
+              <div className="absolute inset-0 flex flex-col justify-end p-6">
+                {/* Restaurant Name */}
+                {/* <h1 className="text-2xl font-extrabold mb-2 drop-shadow-lg tracking-wide">
+                  {restaurant.name}
+                </h1> */}
+
+                {/* Cuisine */}
+                <p className="text-sm font-medium flex items-center mb-2 opacity-90">
+                  <Utensils size={16} className="mr-2 text-yellow-400" />
+                  {restaurant.cuisine}
+                </p>
+
+                {/* Distance Badge */}
+                {distance && (
+                  <p className="text-xs font-medium mb-3">
+                    <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full shadow-md">
+                      {distance.toFixed(2)} km away
+                    </span>
                   </p>
-                  {distance && (
-                    <p className="text-sm font-medium opacity-80 mb-2"> {/* Added mb-2 for spacing */}
-                      <span className="bg-white/20 px-2 py-1 rounded-full">
-                        {distance.toFixed(2)} km away
-                      </span>
-                    </p>
-                  )}
-                  {/* Flex justify-between for address and rating */}
-                  <div className="flex justify-between items-center mt-2">
-                    <p className="text-lg font-light flex items-center flex-1"> {/* flex-1 to allow spacing */}
-                      <MapPin size={18} className="mr-2" />
-                      {restaurant.address}
-                    </p>
-                    <p className="text-lg font-light flex items-center">
-                      <Star size={18} className="mr-2" />
-                      {restaurant.rating}
-                    </p>
-                  </div>
+                )}
+
+                {/* Address + Rating */}
+                <div className="flex justify-between items-center text-sm font-medium">
+                  <p className="flex items-center opacity-90 truncate max-w-[70%]">
+                    <MapPin size={16} className="mr-1 text-emerald-400" />
+                    {restaurant.address}
+                  </p>
+                  <p className="flex items-center font-semibold">
+                    <Star size={16} className="mr-1 text-yellow-400 drop-shadow-sm" />
+                    {restaurant.rating}
+                  </p>
                 </div>
               </div>
             </div>
+
 
             {/* Menu & Sorting Section */}
             <div className="flex justify-between items-center mb-6">
