@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 import {
   Menu as MenuIcon,
@@ -14,7 +15,7 @@ import {
   ReceiptText,
   Truck,
   CheckCircle,
-  Clock
+  Clock,
 } from "lucide-react";
 import NextLink from "next/link";
 
@@ -29,7 +30,7 @@ interface Order {
   items: OrderItem[];
   amount: number;
   date: string;
-  orderStatus: "ordered" | "delivered"; // Add orderStatus field
+  orderStatus: "ordered" | "delivered";
 }
 
 export default function OrdersPage() {
@@ -37,14 +38,36 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [cart, setCart] = useState<OrderItem[]>([]); // Example cart
+  const [cart, setCart] = useState<OrderItem[]>([]);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
 
+  const router = useRouter();
+
+  // ✅ Auth check
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+    } else {
+      setIsAuthChecked(true);
+    }
+  }, [router]);
+
+  // ✅ Fetch orders when authenticated
+  useEffect(() => {
+    if (!isAuthChecked) return;
+
     const fetchOrders = async () => {
       try {
-        const response = await axios.get("/api/orders");
+        const token = localStorage.getItem("token");
+
+        const response = await axios.get("/api/orders", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
         if (response.data.success) {
-          // Assuming your backend now returns the 'orderStatus' field
           setOrders(response.data.orders);
         } else {
           setError("Failed to load orders");
@@ -55,12 +78,13 @@ export default function OrdersPage() {
         setLoading(false);
       }
     };
+
     fetchOrders();
-  }, []);
+  }, [isAuthChecked]);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Helper function to get status badge style
+  // ✅ Status badge helper
   const getStatusStyle = (status: "ordered" | "in process" | "delivered") => {
     switch (status) {
       case "in process":
@@ -93,6 +117,11 @@ export default function OrdersPage() {
         };
     }
   };
+
+  // 🚨 Prevent UI flash before auth check
+  if (!isAuthChecked) {
+    return null; // or show loader
+  }
 
   return (
     <div className="min-h-screen flex bg-gray-50 text-gray-900">
@@ -174,7 +203,9 @@ export default function OrdersPage() {
           <h1 className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 drop-shadow-lg">
             📦 My Order History
           </h1>
-          <p className="mt-3 text-gray-600 text-lg">Track and manage all your past orders here</p>
+          <p className="mt-3 text-gray-600 text-lg">
+            Track and manage all your past orders here
+          </p>
         </div>
 
         {loading ? (
@@ -187,12 +218,19 @@ export default function OrdersPage() {
             ))}
           </div>
         ) : error ? (
-          <p className="text-center text-red-600 font-semibold max-w-4xl mx-auto">{error}</p>
+          <p className="text-center text-red-600 font-semibold max-w-4xl mx-auto">
+            {error}
+          </p>
         ) : orders.length === 0 ? (
           <div className="relative z-10 flex flex-col items-center justify-center py-20 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-200 max-w-3xl mx-auto">
-            <ClipboardListIcon size={72} className="text-indigo-400 mb-6 animate-bounce" />
+            <ClipboardListIcon
+              size={72}
+              className="text-indigo-400 mb-6 animate-bounce"
+            />
             <p className="text-2xl font-semibold text-gray-700">No Orders Yet</p>
-            <p className="text-gray-500 mt-2">Start by ordering from your favorite restaurant 🍴</p>
+            <p className="text-gray-500 mt-2">
+              Start by ordering from your favorite restaurant 🍴
+            </p>
             <NextLink
               href="/restaurants"
               className="mt-6 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg transition-transform hover:scale-105"
@@ -213,14 +251,23 @@ export default function OrdersPage() {
                   {/* Card Header */}
                   <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-100">
                     <div>
-                      <h2 className="text-sm font-semibold text-gray-600">Order ID</h2>
+                      <h2 className="text-sm font-semibold text-gray-600">
+                        Order ID
+                      </h2>
                       <p className="text-lg font-bold text-gray-800">
                         #{order._id.slice(-6)}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-500">
-                        {new Date(order.date).toLocaleDateString()}
+                        {new Date(order.date).toLocaleString(undefined, {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true, // optional, shows AM/PM
+                        })}
                       </p>
                       <span
                         className={`inline-flex items-center mt-1 px-3 py-1 rounded-full text-sm font-semibold shadow-sm ${status.bgColor} ${status.color}`}
@@ -254,16 +301,14 @@ export default function OrdersPage() {
                     </p>
                   </div>
 
-                  {/* Subtle hover glow */}
+                  {/* Hover glow */}
                   <div className="absolute inset-0 rounded-2xl ring-2 ring-transparent group-hover:ring-indigo-200 transition"></div>
                 </div>
-
               );
             })}
           </div>
         )}
       </main>
-
 
       {/* Mobile overlay */}
       {isSidebarOpen && (

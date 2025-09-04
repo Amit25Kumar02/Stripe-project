@@ -15,7 +15,7 @@ import {
   ClipboardListIcon,
   MapPin,
   Star,
-  ChevronLeft, // Import the ChevronLeft icon
+  ChevronLeft,
 } from 'lucide-react';
 import Link from 'next/link';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -70,20 +70,36 @@ export default function RestaurantMenuPage() {
   const [distance, setDistance] = useState<number | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [sortOrder, setSortOrder] = useState<'lowToHigh' | 'highToLow' | 'none'>('none');
+  const [mounted, setMounted] = useState(false); // ✅ mount control
+
+  // ✅ Token check
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login'); // redirect if no token
+    } else {
+      setMounted(true);
+    }
+  }, [router]);
 
   // Load cart from localStorage
   useEffect(() => {
+    if (!mounted) return;
     const savedCart = localStorage.getItem('cart');
     if (savedCart) setCart(JSON.parse(savedCart));
-  }, []);
+  }, [mounted]);
 
   // Save cart to localStorage
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-  }, [cart]);
+    if (mounted) {
+      localStorage.setItem('cart', JSON.stringify(cart));
+    }
+  }, [cart, mounted]);
 
   // Fetch restaurant details and menu
   useEffect(() => {
+    if (!mounted || !restaurantId) return;
+
     const fetchRestaurantDetails = async () => {
       try {
         const { data } = await axios.get<Restaurant>(`/api/restaurants/${restaurantId}`);
@@ -115,11 +131,9 @@ export default function RestaurantMenuPage() {
       }
     };
 
-    if (restaurantId) {
-      fetchRestaurantDetails();
-      fetchMenu();
-    }
-  }, [restaurantId, searchParams]);
+    fetchRestaurantDetails();
+    fetchMenu();
+  }, [restaurantId, searchParams, mounted]);
 
   // Sorted menu
   const sortedMenu = [...menu].sort((a, b) => {
@@ -149,6 +163,9 @@ export default function RestaurantMenuPage() {
     const encodedItems = encodeURIComponent(JSON.stringify(cart));
     router.push(`/checkout?amount=${totalAmount}&items=${encodedItems}`);
   };
+
+  if (!mounted) return null; // ✅ block UI until auth check
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">

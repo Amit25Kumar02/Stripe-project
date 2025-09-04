@@ -7,7 +7,7 @@ import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function LoginPage() {
     const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
@@ -19,16 +19,15 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const res = await axios.post("http://localhost:5000/api/users/login", {
+            const res = await axios.post(`${API_BASE_URL}/api/login`, {
                 phone,
                 password,
             });
-
             localStorage.setItem("token", res.data.token);
             localStorage.setItem("user", JSON.stringify(res.data.user));
 
             toast.success("Login successful! 🍕");
-            window.location.href = "/dashboard";
+            window.location.href = "/";
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Login failed");
         } finally {

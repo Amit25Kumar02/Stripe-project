@@ -7,6 +7,7 @@ import Image from "next/image";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function Signup() {
     const [name, setName] = useState("");
@@ -28,7 +29,7 @@ export default function Signup() {
 
         try {
             setLoading(true);
-            const res = await axios.post("http://localhost:5000/api/users/", {
+            const res = await axios.post(`${API_BASE_URL}/api/users`, {
                 name,
                 email,
                 phone,

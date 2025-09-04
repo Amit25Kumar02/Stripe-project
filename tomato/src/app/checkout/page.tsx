@@ -13,7 +13,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import axios from "axios";
-import { ArrowLeft } from "lucide-react"; // Import the ArrowLeft icon
+import { ArrowLeft } from "lucide-react";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -38,6 +38,7 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [cardHolderName, setCardHolderName] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -45,8 +46,8 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [isSubscription, setIsSubscription] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<keyof typeof subscriptionPlans>("basic");
-  const searchParams = useSearchParams();
 
+  // ✅ Save order to DB after successful payment
   const handlePaymentSuccess = async () => {
     try {
       const decodedItems = searchParams.get("items");
@@ -54,25 +55,39 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
 
       const parsedItems = JSON.parse(decodeURIComponent(decodedItems));
 
-      // Validate items structure
-      const validatedItems = parsedItems.map((item: { id?: string; name?: string; price?: number | string; quantity?: number | string }, index: number) => ({
-        id: item.id || `item-${Date.now()}-${index}`,
-        name: item.name || "Unknown Item",
-        price: Number(item.price) || 0,
-        quantity: Number(item.quantity) || 1
-      }));
+      // ✅ get token from localStorage
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("User not logged in");
 
+      // ✅ sanitize items
+      const validatedItems = parsedItems.map(
+        (
+          item: {
+            id?: string;
+            name?: string;
+            price?: number | string;
+            quantity?: number | string;
+          },
+          index: number
+        ) => ({
+          id: item.id || `item-${Date.now()}-${index}`,
+          name: item.name || "Unknown Item",
+          price: Number(item.price) || 0,
+          quantity: Number(item.quantity) || 1,
+        })
+      );
+
+      // ✅ orderData (no userId here, backend extracts from token)
       const orderData = {
-        id: Date.now().toString(),
-        date: new Date().toLocaleString(),
+        date: new Date().toISOString(),
         items: validatedItems,
         amount: parseFloat(amount.toFixed(2)),
         orderStatus: "ordered",
       };
 
-      console.log("Saving order:", orderData);
-
-      const response = await axios.post("/api/orders", orderData);
+      const response = await axios.post("/api/orders", orderData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (response.data.success) {
         router.push("/order-history");
@@ -80,21 +95,19 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
         throw new Error(response.data.error || "Failed to save order");
       }
     } catch (e: any) {
-      console.error("Failed to save order:", e.response?.data || e.message);
-      setPaymentError(`Order could not be saved: ${e.response?.data?.error || e.message}`);
+      setPaymentError(
+        `Order could not be saved: ${e.response?.data?.error || e.message}`
+      );
     }
   };
 
-
-
+  // ✅ trigger save order when paymentSuccess flips true
   useEffect(() => {
-    // This useEffect hook is now simplified. 
-    // It should trigger the data saving and redirection only when paymentSuccess becomes true
     if (paymentSuccess) {
       handlePaymentSuccess();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paymentSuccess]); // Only depends on paymentSuccess
+  }, [paymentSuccess]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,9 +124,15 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
       const cardNumberElement = elements.getElement(CardNumberElement);
       if (!cardNumberElement) throw new Error("Card number element not found");
 
-      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card: cardNumberElement, billing_details: { name: cardHolderName } },
-      });
+      const { error, paymentIntent } = await stripe.confirmCardPayment(
+        clientSecret,
+        {
+          payment_method: {
+            card: cardNumberElement,
+            billing_details: { name: cardHolderName },
+          },
+        }
+      );
 
       if (error) setPaymentError(error.message || "Payment failed");
       else if (paymentIntent && paymentIntent.status === "succeeded") {
@@ -128,7 +147,9 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
 
   const handleSubscription = async () => {
     try {
-      const { data } = await axios.post("/api/payments/subscription", { plan: selectedPlan });
+      const { data } = await axios.post("/api/payments/subscription", {
+        plan: selectedPlan,
+      });
       if (data.url) window.location.href = data.url;
     } catch (err: any) {
       setPaymentError(err.message || "Subscription failed");
@@ -137,7 +158,12 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
 
   const CARD_ELEMENT_OPTIONS = {
     style: {
-      base: { fontSize: "16px", color: "#32325d", fontFamily: "Arial, sans-serif", "::placeholder": { color: "#a0aec0" } },
+      base: {
+        fontSize: "16px",
+        color: "#32325d",
+        fontFamily: "Arial, sans-serif",
+        "::placeholder": { color: "#a0aec0" },
+      },
       invalid: { color: "#fa755a" },
     },
   };
@@ -152,22 +178,42 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
         <span className="text-lg font-semibold">Back to menu</span>
       </button>
 
-      <h2 className="text-3xl font-extrabold text-gray-900 text-center">Secure Checkout</h2>
+      <h2 className="text-3xl font-extrabold text-gray-900 text-center">
+        Secure Checkout
+      </h2>
 
       <div className="flex justify-center items-center gap-4 mb-6">
-        <span className={`font-medium ${!isSubscription ? "text-blue-600" : "text-gray-500"}`}>One-time</span>
+        <span
+          className={`font-medium ${!isSubscription ? "text-blue-600" : "text-gray-500"
+            }`}
+        >
+          One-time
+        </span>
         <label className="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" className="sr-only peer" checked={isSubscription} onChange={() => setIsSubscription(!isSubscription)} />
+          <input
+            type="checkbox"
+            className="sr-only peer"
+            checked={isSubscription}
+            onChange={() => setIsSubscription(!isSubscription)}
+          />
           <div className="w-16 h-8 bg-gray-300 rounded-full peer-focus:ring-2 peer-focus:ring-blue-400 peer-checked:bg-green-500 transition-all duration-300"></div>
           <div className="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 peer-checked:translate-x-8"></div>
         </label>
-        <span className={`font-medium ${isSubscription ? "text-green-600" : "text-gray-500"}`}>Subscription</span>
+        <span
+          className={`font-medium ${isSubscription ? "text-green-600" : "text-gray-500"
+            }`}
+        >
+          Subscription
+        </span>
       </div>
 
       {!isSubscription ? (
         <form onSubmit={handleSubmit} className="space-y-6">
           <p className="text-center text-gray-600 mb-4">
-            You&apos;re about to pay <span className="font-semibold text-blue-600">${amount.toFixed(2)}</span>
+            You&apos;re about to pay{" "}
+            <span className="font-semibold text-blue-600">
+              ${amount.toFixed(2)}
+            </span>
           </p>
           <input
             type="text"
@@ -177,13 +223,27 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
             className="w-full px-5 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
             required
           />
-          <div className="p-4 border rounded-xl mb-4 bg-gray-50"><CardNumberElement options={CARD_ELEMENT_OPTIONS} /></div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 border rounded-xl bg-gray-50"><CardExpiryElement options={CARD_ELEMENT_OPTIONS} /></div>
-            <div className="p-4 border rounded-xl bg-gray-50"><CardCvcElement options={CARD_ELEMENT_OPTIONS} /></div>
+          <div className="p-4 border rounded-xl mb-4 bg-gray-50">
+            <CardNumberElement options={CARD_ELEMENT_OPTIONS} />
           </div>
-          {paymentError && <p className="text-red-600 font-medium text-center">{paymentError}</p>}
-          {paymentSuccess && <p className="text-green-600 font-medium text-center">Payment successful! Redirecting... 🎉</p>}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 border rounded-xl bg-gray-50">
+              <CardExpiryElement options={CARD_ELEMENT_OPTIONS} />
+            </div>
+            <div className="p-4 border rounded-xl bg-gray-50">
+              <CardCvcElement options={CARD_ELEMENT_OPTIONS} />
+            </div>
+          </div>
+          {paymentError && (
+            <p className="text-red-600 font-medium text-center">
+              {paymentError}
+            </p>
+          )}
+          {paymentSuccess && (
+            <p className="text-green-600 font-medium text-center">
+              Payment successful! Redirecting... 🎉
+            </p>
+          )}
           <button
             type="submit"
             disabled={processing || paymentSuccess}
@@ -195,10 +255,16 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
       ) : (
         <div className="space-y-6">
           <div className="border rounded-2xl p-6 shadow-lg bg-green-50">
-            <h3 className="text-xl font-bold text-green-800 mb-2">{subscriptionPlans[selectedPlan].name}</h3>
-            <p className="text-lg font-semibold text-green-700 mb-2">${subscriptionPlans[selectedPlan].price}/month</p>
+            <h3 className="text-xl font-bold text-green-800 mb-2">
+              {subscriptionPlans[selectedPlan].name}
+            </h3>
+            <p className="text-lg font-semibold text-green-700 mb-2">
+              ${subscriptionPlans[selectedPlan].price}/month
+            </p>
             <ul className="list-disc list-inside space-y-1 text-green-700">
-              {subscriptionPlans[selectedPlan].features.map((f, i) => <li key={i}>{f}</li>)}
+              {subscriptionPlans[selectedPlan].features.map((f, i) => (
+                <li key={i}>{f}</li>
+              ))}
             </ul>
           </div>
 
@@ -206,8 +272,12 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
             {Object.keys(subscriptionPlans).map((planKey) => (
               <button
                 key={planKey}
-                onClick={() => setSelectedPlan(planKey as keyof typeof subscriptionPlans)}
-                className={`px-4 py-2 rounded-lg font-semibold shadow-md transition-all ${selectedPlan === planKey ? "bg-green-600 text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                onClick={() =>
+                  setSelectedPlan(planKey as keyof typeof subscriptionPlans)
+                }
+                className={`px-4 py-2 rounded-lg font-semibold shadow-md transition-all ${selectedPlan === planKey
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
               >
                 {subscriptionPlans[planKey as keyof typeof subscriptionPlans].name}
@@ -215,7 +285,9 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
             ))}
           </div>
 
-          {paymentError && <p className="text-red-600 font-medium text-center">{paymentError}</p>}
+          {paymentError && (
+            <p className="text-red-600 font-medium text-center">{paymentError}</p>
+          )}
 
           <button
             onClick={handleSubscription}

@@ -3,6 +3,7 @@
 'use client';
 
 import React, { useEffect, useState, Suspense, lazy } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
   MapPin,
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react';
 import NextLink from 'next/link';
 import axios from 'axios';
+
 
 // Dynamically import Map component (will only load on client side)
 const Map = lazy(() => import('../components/map'));
@@ -146,9 +148,14 @@ export default function RestaurantsPage() {
   const [manualMapLocation, setManualMapLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [userLocationClicked, setUserLocationClicked] = useState(false);
   const [manualLocationClicked, setManualLocationClicked] = useState(false);
-
+  const router = useRouter();
   useEffect(() => {
-    setMounted(true);
+      const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login'); // redirect if no token
+    } else {
+      setMounted(true);
+    }
     // Load saved location from localStorage
     const savedLocation = localStorage.getItem('savedLocation');
     if (savedLocation) {
@@ -165,7 +172,7 @@ export default function RestaurantsPage() {
         }
       }
     }
-  }, []);
+  }, [router]);
 
   const saveLocationToStorage = (locationData: SavedLocation) => {
     localStorage.setItem('savedLocation', JSON.stringify(locationData));

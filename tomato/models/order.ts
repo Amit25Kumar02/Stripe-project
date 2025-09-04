@@ -36,6 +36,11 @@ const orderSchema = new mongoose.Schema({
     default: "ordered",
     required: true,
   },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', 
+    required: true,
+  },
 });
 
 export default mongoose.models.Order || mongoose.model("Order", orderSchema);
