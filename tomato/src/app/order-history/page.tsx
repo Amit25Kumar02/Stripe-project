@@ -197,10 +197,10 @@ export default function OrdersPage() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 lg:ml-64 p-6 lg:p-12 relative overflow-hidden bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
+      <main className="flex-1 lg:ml-64 p-6 lg:p-12 relative overflow-hidden ">
         {/* Page Title */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 drop-shadow-lg">
+          <h1 className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-black drop-shadow-lg">
             📦 My Order History
           </h1>
           <p className="mt-3 text-gray-600 text-lg">

@@ -10,6 +10,7 @@ import {
   Menu as MenuIcon,
   X as CloseIcon,
   ClipboardListIcon,
+  LogOut as LogoutIcon,
 } from 'lucide-react';
 
 
@@ -49,9 +50,16 @@ export default function Home() {
     { name: '🍩 Donut Treat', desc: 'Sweet delight' },
   ];
 
+  // ✅ Logout logic
+  const handleLogout = () => {
+    localStorage.removeItem('token'); 
+    localStorage.removeItem('user');
+    router.push('/login'); // redirect to login
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
-     
+
       {/* Mobile Sidebar Toggle Button */}
       <button
         className="lg:hidden fixed top-4 left-4 bg-blue-600 text-white p-2 rounded-full shadow-lg z-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
@@ -63,9 +71,8 @@ export default function Home() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
+        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
       >
         <div className="mb-8 text-center lg:text-left">
           <h2 className="text-3xl font-extrabold text-gray-900 flex items-center justify-center lg:justify-start">
@@ -73,6 +80,8 @@ export default function Home() {
           </h2>
           <p className="text-sm text-gray-500 mt-1">Your Culinary Companion</p>
         </div>
+
+        {/* Navigation */}
         <nav className="flex-grow">
           <ul className="space-y-2">
             {navLinks.map((link) => (
@@ -89,8 +98,22 @@ export default function Home() {
                 </Link>
               </li>
             ))}
+
+            {/* ✅ Logout Button */}
+            <li>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-red-50 hover:text-blue-600 transition duration-150 ease-in-out group"
+              >
+                <span className="mr-3 text-gray-500 group-hover:text-blue-500 transition-colors duration-150">
+                  <LogoutIcon size={20} />
+                </span>
+                Logout
+              </button>
+            </li>
           </ul>
         </nav>
+
         <div className="mt-auto text-center text-sm text-gray-500 border-t pt-4">
           <p>&copy; {new Date().getFullYear()} Tomato</p>
         </div>
@@ -98,7 +121,7 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex-1 lg:ml-64 p-6 flex flex-col gap-10">
-        <div className="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 text-white rounded-3xl shadow-2xl p-10 md:p-16 w-full max-w-full mx-auto text-center">
+        <div className="bg-gradient-to-r from-rose-600 to-amber-500 text-white rounded-3xl shadow-2xl p-10 md:p-16 w-full max-w-full mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-extrabold mb-4">
             Welcome to <span className="text-yellow-300">My Restaurant App</span>
           </h1>
