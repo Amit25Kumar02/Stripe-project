@@ -47,6 +47,14 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
   const [isSubscription, setIsSubscription] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<keyof typeof subscriptionPlans>("basic");
 
+  // ✅ Redirect if no token found
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+    }
+  }, [router]);
+
   // ✅ Save order to DB after successful payment
   const handlePaymentSuccess = async () => {
     try {
@@ -276,8 +284,8 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
                   setSelectedPlan(planKey as keyof typeof subscriptionPlans)
                 }
                 className={`px-4 py-2 rounded-lg font-semibold shadow-md transition-all ${selectedPlan === planKey
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
               >
                 {subscriptionPlans[planKey as keyof typeof subscriptionPlans].name}
