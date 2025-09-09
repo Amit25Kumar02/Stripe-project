@@ -4,7 +4,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { CheckCircle, Home as HomeIcon, CreditCard, Menu as MenuIcon, X as CloseIcon, Utensils, ClipboardList } from "lucide-react";
+import { CheckCircle, Home as HomeIcon, Menu as MenuIcon, X as CloseIcon, Utensils, ClipboardList } from "lucide-react";
 
 // Define the shape of an item in the order for type safety
 interface OrderedItem {
@@ -44,7 +44,6 @@ function OrderConfirmationContent() {
   const menuItems = [
     { name: "Home", href: "/", icon: <HomeIcon size={20} /> },
     { name: "Restaurants", href: "/restaurants", icon: <Utensils size={20} /> },
-    { name: "Orders", href: "/orders", icon: <CreditCard size={20} /> },
     { name: "Order History", href: "/order-history", icon: <ClipboardList size={20} /> },
   ];
 
@@ -124,7 +123,7 @@ function OrderConfirmationContent() {
           )}
 
           <Link
-            href="/orders"
+            href="/order-history"
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition"
           >
             View My Orders
