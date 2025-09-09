@@ -205,7 +205,7 @@ export default function RestaurantMenuPage() {
             </li>
             <li>
               <Dialog.Root>
-                <Dialog.Trigger className="flex items-center w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600">
+                <Dialog.Trigger className="flex items-center cursor-pointer w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600">
                   <ShoppingCart size={20} className="mr-3 text-gray-500" /> Cart
                   {cart.length > 0 && (
                     <span className="ml-auto bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
@@ -302,7 +302,7 @@ export default function RestaurantMenuPage() {
             <div className="mb-4">
               <button
                 onClick={() => router.back()}
-                className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                className="flex items-center text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
               >
                 <ChevronLeft size={24} className="mr-1" />
                 <span className="text-lg font-medium">Back to Restaurants</span>
@@ -422,7 +422,7 @@ export default function RestaurantMenuPage() {
                   </div>
                   <button
                     onClick={() => addToCart(item)}
-                    className="mt-4 w-full bg-blue-600 text-white font-semibold py-2 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                    className="mt-4 w-full cursor-pointer bg-blue-600 text-white font-semibold py-2 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
                   >
                     <ShoppingCart size={20} />
                     <span>Add to Cart</span>

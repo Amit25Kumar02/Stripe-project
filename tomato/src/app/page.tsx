@@ -103,7 +103,7 @@ export default function Home() {
             <li>
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-red-50 hover:text-blue-600 transition duration-150 ease-in-out group"
+                className="w-full flex items-center px-4 cursor-pointer py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-red-50 hover:text-blue-600 transition duration-150 ease-in-out group"
               >
                 <span className="mr-3 text-gray-500 group-hover:text-blue-500 transition-colors duration-150">
                   <LogoutIcon size={20} />
@@ -130,12 +130,12 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-6">
             <Link href="/restaurants">
-              <button className="w-full sm:w-auto bg-white text-blue-600 font-bold py-4 px-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
+              <button className="w-full sm:w-auto bg-white cursor-pointer text-blue-600 font-bold py-4 px-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
                 Find Nearby Restaurants 📍
               </button>
             </Link>
             <Link href="/checkout">
-              <button className="w-full sm:w-auto bg-yellow-400 text-gray-900 font-bold py-4 px-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
+              <button className="w-full sm:w-auto cursor-pointer bg-yellow-400 text-gray-900 font-bold py-4 px-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
                 Go to Checkout 💳
               </button>
             </Link>

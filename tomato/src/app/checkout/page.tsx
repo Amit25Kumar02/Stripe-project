@@ -180,7 +180,7 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
     <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-8 md:p-12 space-y-6">
       <button
         onClick={() => router.back()}
-        className="flex items-center text-blue-600 hover:text-blue-800 transition-colors mb-4"
+        className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800 transition-colors mb-4"
       >
         <ArrowLeft size={24} className="mr-2" />
         <span className="text-lg font-semibold">Back to menu</span>
@@ -255,7 +255,7 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
           <button
             type="submit"
             disabled={processing || paymentSuccess}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition duration-300 ease-in-out disabled:opacity-50"
+            className="w-full cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition duration-300 ease-in-out disabled:opacity-50"
           >
             {processing ? "Processing..." : `Pay $${amount.toFixed(2)}`}
           </button>
@@ -283,7 +283,7 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
                 onClick={() =>
                   setSelectedPlan(planKey as keyof typeof subscriptionPlans)
                 }
-                className={`px-4 py-2 rounded-lg font-semibold shadow-md transition-all ${selectedPlan === planKey
+                className={`px-4 py-2 cursor-pointer rounded-lg font-semibold shadow-md transition-all ${selectedPlan === planKey
                   ? "bg-green-600 text-white"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
@@ -299,7 +299,7 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
 
           <button
             onClick={handleSubscription}
-            className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg transition duration-300 ease-in-out"
+            className="w-full mt-4 cursor-pointer bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg transition duration-300 ease-in-out"
           >
             Subscribe
           </button>

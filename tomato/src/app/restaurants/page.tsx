@@ -365,7 +365,7 @@ export default function RestaurantsPage() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
       <button
-        className="lg:hidden fixed top-4 left-4 bg-blue-600 text-white p-2 rounded-full shadow-lg z-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
+        className="lg:hidden fixed top-4 left-4 bg-blue-600 text-white p-2 rounded-full shadow-lg z-50 focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         aria-label="Toggle sidebar"
       >
@@ -431,7 +431,7 @@ export default function RestaurantsPage() {
               {/* Search button */}
               <button
                 type="submit"
-                className="w-full sm:w-auto bg-blue-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+                className="w-full sm:w-auto cursor-pointer bg-blue-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-blue-700 transition"
                 disabled={!manualLocationQuery.trim()}
               >
                 Search
@@ -444,7 +444,7 @@ export default function RestaurantsPage() {
               <button
                 type="button"
                 onClick={fetchUserLocation}
-                className="flex-1 sm:flex-none bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 transition flex items-center justify-center"
+                className="flex-1 sm:flex-none cursor-pointer bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 transition flex items-center justify-center"
                 title="Use my current location"
                 disabled={locationLoading}
               >
@@ -483,7 +483,7 @@ export default function RestaurantsPage() {
               <button
                 type="button"
                 onClick={handleManualMapSearch}
-                className={`flex-1 sm:flex-none p-2 rounded-lg transition flex items-center justify-center ${manualSearchMode
+                className={`flex-1 sm:flex-none cursor-pointer p-2 rounded-lg transition flex items-center justify-center ${manualSearchMode
                     ? "bg-orange-500 text-white hover:bg-orange-600"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
