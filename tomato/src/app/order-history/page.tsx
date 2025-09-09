@@ -4,7 +4,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { io } from "socket.io-client";
 import {
   Menu as MenuIcon,
   X as CloseIcon,
@@ -19,8 +18,6 @@ import {
   Clock,
 } from "lucide-react";
 import NextLink from "next/link";
-
-const socket = io(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"); 
 
 interface OrderItem {
   name: string;
@@ -84,19 +81,6 @@ export default function OrdersPage() {
 
     fetchOrders();
   }, [isAuthChecked]);
-    useEffect(() => {
-    socket.on("order-update", (data: { orderId: string; status: string }) => {
-      setOrders((prevOrders) =>
-        prevOrders.map((o) =>
-          o._id === data.orderId ? { ...o, orderStatus: data.status as Order["orderStatus"] } : o
-        )
-      );
-    });
-
-    return () => {
-      socket.off("order-update");
-    };
-  }, []);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
 
