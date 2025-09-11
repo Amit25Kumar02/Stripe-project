@@ -48,3 +48,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(req: NextRequest) {
+  await connectDB();
+
+  try {
+    // ⚡ For now: just return first user (demo)
+    // Later: replace with session/JWT user
+    const user = await User.findOne().select("name email phone -_id");
+    console.log("Fetch user:", user);
+    if (!user) {
+      return NextResponse.json({ message: "No user found" }, { status: 404 });
+    }
+
+    return NextResponse.json(user, { status: 200 });
+  } catch (error) {
+    console.error("Fetch user error:", error);
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
