@@ -3,11 +3,13 @@ import { NextResponse } from "next/server";
 import axios from "axios";
 
 const LIVECHAT_API = "https://api.livechatinc.com/v3.6/agent/action";
-const LIVECHAT_TOKEN = process.env.LIVECHAT_TOKEN; // 🔑 add in .env.local
 
-// Common axios headers
+// ⚡ Use Base64 Encoded Token (from LiveChat dashboard screenshot)
+const LIVECHAT_TOKEN = process.env.LIVECHAT_TOKEN; 
+
+// ✅ Correct headers for PAT (Basic Auth)
 const headers = {
-  Authorization: `Bearer ${LIVECHAT_TOKEN}`,
+  Authorization: `Basic ${LIVECHAT_TOKEN}`,
   "Content-Type": "application/json",
 };
 
@@ -26,7 +28,7 @@ export async function POST(req: Request) {
     // 🟢 STEP 2: Fetch active chats from LiveChat
     const chatsRes = await axios.post(
       `${LIVECHAT_API}/list_chats`,
-      { limit: 10 },
+      { limit: 100, status: "active" },
       { headers }
     );
 
@@ -34,10 +36,11 @@ export async function POST(req: Request) {
     console.log("📂 LiveChat chats fetched:", chats.length);
 
     // 🟢 STEP 3: Try to find the chat for this user
-    // 👉 Replace with real matching logic (email/phone/metadata from webhook)
     const targetChat = chats.find((c: any) =>
       c.users.some(
-        (u: any) => u.type === "customer" && u.name?.includes("Amit")
+        (u: any) =>
+          u.type === "customer" &&
+          (u.email === body.data.email || u.session_fields?.some((f: any) => f.default_Phone === body.data.phone))
       )
     );
 
@@ -48,7 +51,12 @@ export async function POST(req: Request) {
 
     const chatId = targetChat.id;
     const threadId = targetChat.last_thread_summary?.id;
+    console.log(`✅ Found chat ${chatId} for user`);
 
+    if (!threadId) {
+      console.error("❌ No thread found in the chat");
+      return NextResponse.json({ error: "Thread not found" }, { status: 404 });
+    }
     // 🟢 STEP 4: Send confirmation message into the chat
     await axios.post(
       `${LIVECHAT_API}/send_event`,
