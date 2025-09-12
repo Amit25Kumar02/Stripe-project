@@ -1,94 +1,90 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import axios from "axios";
 
-export async function POST(req: NextRequest) {
-  console.log("🔔 Webhook endpoint hit");
-  
-  try {
-    const data = await req.json();
-    console.log("📩 Webhook received:", JSON.stringify(data, null, 2));
+const LIVECHAT_API = "https://api.livechatinc.com/v3.6/agent/action";
+const LIVECHAT_TOKEN = process.env.LIVECHAT_TOKEN; // 🔑 add in .env.local
 
-    // Validate LiveChat token exists
-    if (!process.env.LIVECHAT_TOKEN) {
-      console.error("❌ Missing LIVECHAT_TOKEN environment variable");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+// Common axios headers
+const headers = {
+  Authorization: `Bearer ${LIVECHAT_TOKEN}`,
+  "Content-Type": "application/json",
+};
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    console.log("📩 Webhook received:", body);
+
+    // 🟢 STEP 1: Validate webhook type
+    if (body.type !== "payment_success") {
+      return NextResponse.json({ message: "Ignored, not a payment webhook" });
     }
 
-    console.log("🔑 Token is present, fetching active chats...");
+    const { transactionId, amount, currency } = body.data;
 
-    // 🔎 STEP 1: Fetch active chats
+    // 🟢 STEP 2: Fetch active chats from LiveChat
     const chatsRes = await axios.post(
-      "https://api.livechatinc.com/v3.4/agent/action/list_chats",
-      { 
-        limit: 5,
-        filters: {
-          open: true
-        }
-      },
-      {
-        headers: {
-          Authorization: `Basic ${process.env.LIVECHAT_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        timeout: 10000,
-      }
+      `${LIVECHAT_API}/list_chats`,
+      { limit: 10 },
+      { headers }
     );
 
-    console.log("✅ LiveChat list_chats response:", JSON.stringify(chatsRes.data, null, 2));
+    const chats = chatsRes.data.chats || [];
+    console.log("📂 LiveChat chats fetched:", chats.length);
 
-    if (!chatsRes.data.chats || chatsRes.data.chats.length === 0) {
-      console.log("⚠️ No active chats found");
-      return NextResponse.json(
-        { message: "Webhook received but no active chats" },
-        { status: 200 }
-      );
+    // 🟢 STEP 3: Try to find the chat for this user
+    // 👉 Replace with real matching logic (email/phone/metadata from webhook)
+    const targetChat = chats.find((c: any) =>
+      c.users.some(
+        (u: any) => u.type === "customer" && u.name?.includes("Amit")
+      )
+    );
+
+    if (!targetChat) {
+      console.error("❌ No matching chat found for webhook user");
+      return NextResponse.json({ error: "Chat not found" }, { status: 404 });
     }
 
-    const chatId = chatsRes.data.chats[0].id;
-    console.log("💬 Using chat_id:", chatId);
+    const chatId = targetChat.id;
+    const threadId = targetChat.last_thread_summary?.id;
 
-    // 🔎 STEP 2: Send webhook data as a message
-    console.log("📤 Attempting to send message to LiveChat...");
-    const sendRes = await axios.post(
-      "https://api.livechatinc.com/v3.4/agent/action/send_event",
+    // 🟢 STEP 4: Send confirmation message into the chat
+    await axios.post(
+      `${LIVECHAT_API}/send_event`,
       {
         chat_id: chatId,
+        thread_id: threadId,
         event: {
           type: "message",
-          text: `💰 Payment Successful!\nTransaction ID: ${data.data.transactionId}\nAmount: ${data.data.amount} ${data.data.currency}`,
+          text: `✅ Payment of ${amount / 100} ${currency.toUpperCase()} received successfully! (Txn ID: ${transactionId})`,
         },
       },
-      {
-        headers: {
-          Authorization: `Basic ${process.env.LIVECHAT_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        timeout: 10000,
-      }
+      { headers }
     );
 
-    console.log("✅ Message sent successfully:", JSON.stringify(sendRes.data, null, 2));
-    return NextResponse.json({ success: true, forwarded: data });
-    
-  } catch (error: any) {
-    console.error("❌ Error in webhook processing:");
-    console.error("Full error:", error);
-    
-    if (error.response) {
-      console.error("Status:", error.response.status);
-      console.error("Data:", JSON.stringify(error.response.data, null, 2));
-    } else if (error.request) {
-      console.error("No response received:", error.message);
-    } else {
-      console.error("Error:", error.message);
-    }
-    
+    // 🟢 STEP 5: Update chat properties with payment details
+    await axios.post(
+      `${LIVECHAT_API}/update_chat_properties`,
+      {
+        chat_id: chatId,
+        properties: {
+          payment: {
+            transactionId,
+            amount,
+            currency,
+            status: "success",
+          },
+        },
+      },
+      { headers }
+    );
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error("❌ Error in webhook processing:", err.response?.data || err);
     return NextResponse.json(
-      { error: "Failed to process webhook" },
+      { error: "Webhook processing failed", details: err.response?.data || err },
       { status: 500 }
     );
   }
