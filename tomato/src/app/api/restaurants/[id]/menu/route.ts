@@ -10,8 +10,8 @@ export async function POST(
   try {
     await connect();
     const params = await context.params;
-    const restaurantId = params.id; // dynamic id from URL
-    const body = await req.json(); // Expecting array of menu items
+    const restaurantId = params.id; 
+    const body = await req.json(); 
 
     if (!Array.isArray(body)) {
       return NextResponse.json(

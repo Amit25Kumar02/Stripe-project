@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Order from "@/models/order";
-import { verifyToken } from "@/lib/authMiddleware"; // JWT verification helper
+import { verifyToken } from "@/lib/authMiddleware"; 
 
 // ----------------- POST: Create new order -----------------
 export async function POST(req: NextRequest) {
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
     // ✅ Get token from Authorization header
     const authHeader = req.headers.get("authorization");
-    const userId = verifyToken(authHeader ?? undefined); // throws if invalid
+    const userId = verifyToken(authHeader ?? undefined); 
 
     const body = await req.json();
     const { date, items, amount, orderStatus } = body;

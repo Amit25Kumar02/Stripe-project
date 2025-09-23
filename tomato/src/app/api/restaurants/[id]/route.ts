@@ -13,22 +13,23 @@ export async function GET(
     // Await the params promise first
     const params = await context.params;
     const id = params.id;
-
-    // Now 'id' is available
+    if (!id) {
+      return NextResponse.json({ message: "Restaurant ID is required" }, { status: 400 });
+    }
     
     // First try ObjectId
     let restaurant = null;
     try {
       restaurant = await Restaurant.findById(id);
     } catch {
-      // ignore invalid ObjectId
+
     }
 
     // If not found, try string _id
     if (!restaurant) {
       restaurant = await Restaurant.findOne({ _id: id });
     }
-
+      
     if (!restaurant) {
       return NextResponse.json(
         { message: "Restaurant not found" },

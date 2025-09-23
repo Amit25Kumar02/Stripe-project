@@ -105,7 +105,7 @@ export default function LoginPage() {
             <div className="flex w-full md:w-1/2 items-center justify-center p-6 md:p-10">
                 <div className="w-full max-w-md">
                     <div className="mb-8 flex items-center">
-                        <span className="top-4 left-4 md:top-8 md:left-8">
+                        <span className="mr-4">
                             <Image
                                 src="/favicon.ico"
                                 alt="Tomato"
@@ -114,8 +114,8 @@ export default function LoginPage() {
                                 className="rounded-full shadow-lg"
                             />
                         </span>
-                        <span className="top-6 right-6 md:top-10 md:right-10 text-right">
-                            <h1 className="text-3xl font-bold mt-4 text-gray-800">Welcome back</h1>
+                        <span>
+                            <h1 className="text-3xl font-bold text-gray-800">Welcome back</h1>
                             <p className="text-gray-600 mt-2">Sign in to your Tomato account</p>
                         </span>
                     </div>

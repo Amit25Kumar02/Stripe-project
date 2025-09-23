@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 
 interface RequestBody {
-  plan?: "basic" | "premium"; // plan selected by user
+  plan?: "basic" | "premium"; 
 }
 
 export async function POST(req: Request) {

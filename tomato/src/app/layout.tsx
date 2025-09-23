@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-"use client"; // Make this a client component
+"use client"; 
 
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";

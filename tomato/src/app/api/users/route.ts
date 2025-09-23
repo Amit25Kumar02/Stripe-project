@@ -54,8 +54,7 @@ export async function GET(req: NextRequest) {
   await connectDB();
 
   try {
-    // ⚡ For now: just return first user (demo)
-    // Later: replace with session/JWT user
+
     const user = await User.findOne().select("name email phone -_id");
     console.log("Fetch user:", user);
     if (!user) {

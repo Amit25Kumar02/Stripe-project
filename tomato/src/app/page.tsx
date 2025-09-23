@@ -19,11 +19,11 @@ export default function Home() {
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const router = useRouter();
 
-  // ✅ Check token on component mount
+  // Check token on component mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      router.push('/login'); // redirect if no token
+      router.push('/login'); 
     } else {
       // optionally validate token here with backend if needed
       setIsAuthChecked(true);
@@ -31,7 +31,7 @@ export default function Home() {
   }, [router]);
 
   if (!isAuthChecked) {
-    return null; // or a loader/spinner
+    return null; 
   }
 
   const navLinks = [
@@ -50,11 +50,11 @@ export default function Home() {
     { name: '🍩 Donut Treat', desc: 'Sweet delight' },
   ];
 
-  // ✅ Logout logic
+  // Logout logic
   const handleLogout = () => {
     localStorage.removeItem('token'); 
     localStorage.removeItem('user');
-    router.push('/login'); // redirect to login
+    router.push('/login'); 
   };
 
   return (
@@ -99,7 +99,7 @@ export default function Home() {
               </li>
             ))}
 
-            {/* ✅ Logout Button */}
+            {/* Logout Button */}
             <li>
               <button
                 onClick={handleLogout}
@@ -122,7 +122,7 @@ export default function Home() {
       {/* Main Content */}
       <main className="flex-1 lg:ml-64 p-6 flex flex-col gap-10">
         <div className="bg-gradient-to-r from-rose-600 to-amber-500 text-white rounded-3xl shadow-2xl p-10 md:p-16 w-full max-w-full mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-4">
+          <h1 className="text-2xl md:text-6xl font-extrabold mb-4">
             Welcome to <span className="text-yellow-300">My Restaurant App</span>
           </h1>
           <p className="text-lg md:text-xl text-white/90 mb-12">
@@ -162,7 +162,7 @@ export default function Home() {
       {/* Overlay */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          className="fixed inset-0 bg-scroll- bg-black bg-opacity-50 z-30 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}

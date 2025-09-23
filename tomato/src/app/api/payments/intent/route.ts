@@ -1,6 +1,4 @@
-// my-app/app/api/payments/intent/route.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe'; 
 

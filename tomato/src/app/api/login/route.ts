@@ -34,13 +34,11 @@ export async function POST(req: NextRequest) {
     if (!isMatch) {
       return NextResponse.json({ message: 'Invalid phone number or password' }, { status: 401 });
     }
-
-    // If login is successful, generate a JSON Web Token (JWT)
-    // The payload contains the user's ID and name for authentication purposes.
+    // Create a JWT token for the authenticated user
     const token = jwt.sign(
       { id: user._id, name: user.name, phone: user.phone },
-      process.env.JWT_SECRET || 'your_jwt_secret', // Use an environment variable for the secret key
-      { expiresIn: '7d' } // The token will expire in 7 days
+      process.env.JWT_SECRET || 'your_jwt_secret', 
+      { expiresIn: '7d' } 
     );
 
     // Return a success response with the token and user data
