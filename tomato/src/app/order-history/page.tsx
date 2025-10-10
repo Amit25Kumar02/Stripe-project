@@ -43,7 +43,7 @@ export default function OrdersPage() {
 
   const router = useRouter();
 
-  // ✅ Auth check
+  // Auth check
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -53,7 +53,7 @@ export default function OrdersPage() {
     }
   }, [router]);
 
-  // ✅ Fetch orders when authenticated
+  // Fetch orders when authenticated
   useEffect(() => {
     if (!isAuthChecked) return;
 
@@ -84,7 +84,7 @@ export default function OrdersPage() {
 
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // ✅ Status badge helper
+  // Status badge helper
   const getStatusStyle = (status: "ordered" | "in process" | "delivered") => {
     switch (status) {
       case "in process":
@@ -118,16 +118,16 @@ export default function OrdersPage() {
     }
   };
 
-  // 🚨 Prevent UI flash before auth check
+  //  Prevent UI flash before auth check
   if (!isAuthChecked) {
     return null; // or show loader
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-50 text-gray-900">
+    <div className="min-h-screen flex bg-gray-50 text-rose-600">
       {/* Mobile toggle button */}
       <button
-        className="lg:hidden fixed top-4 left-4 bg-gray-800 text-white p-2 rounded-full shadow-lg z-50 focus:outline-none focus:ring-2 focus:ring-gray-600 transition-all duration-300"
+        className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full shadow-lg z-50 focus:outline-none focus:ring-2 focus:ring-rose-600 transition-all duration-300"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         aria-label="Toggle sidebar"
       >
@@ -140,26 +140,26 @@ export default function OrdersPage() {
           } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
       >
         <h2 className="text-3xl font-extrabold text-gray-900 mb-6 flex items-center">
-          <span className="text-red-500 mr-2">Tomato</span> 🍔
+          <span className="text-rose-600 mr-2">Tomato</span> 🍔
         </h2>
         <nav className="flex-grow">
           <ul className="space-y-2">
             <li>
               <NextLink
                 href="/"
-                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                className="flex items-center px-4 py-3 text-lg font-medium text-gray-600 rounded-lg hover:bg-rose-100 hover:text-rose-600 transition-colors"
                 onClick={() => setIsSidebarOpen(false)}
               >
-                <HomeIcon size={20} className="mr-3 text-gray-500" /> Home
+                <HomeIcon size={20} className="mr-3 " /> Home
               </NextLink>
             </li>
             <li>
               <NextLink
                 href="/restaurants"
-                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                className="flex items-center px-4 py-3 text-lg font-medium text-gray-600 rounded-lg hover:bg-rose-100 hover:text-rose-600 transition-colors"
                 onClick={() => setIsSidebarOpen(false)}
               >
-                <Utensils size={20} className="mr-3 text-gray-500" /> Restaurants
+                <Utensils size={20} className="mr-3" /> Restaurants
               </NextLink>
             </li>
             <li>
@@ -168,13 +168,13 @@ export default function OrdersPage() {
                   setIsCartOpen(true);
                   setIsSidebarOpen(false);
                 }}
-                className="flex items-center cursor-pointer px-4 py-3 text-lg font-medium text-gray-700 rounded-lg w-full text-left hover:bg-gray-100 hover:text-blue-600 relative transition-colors"
+                className="flex items-center cursor-pointer px-4 py-3 text-lg font-medium text-gray-600 rounded-lg w-full text-left hover:bg-rose-100 hover:text-rose-600 relative transition-colors"
                 disabled={cart.length === 0}
               >
-                <ShoppingCart size={20} className="mr-3 text-gray-500" />
+                <ShoppingCart size={20} className="mr-3" />
                 Cart
                 {cart.length > 0 && (
-                  <span className="absolute top-2 right-4 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-bounce">
+                  <span className="absolute top-2 right-4 bg-rose-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-bounce">
                     {cart.reduce((total, item) => total + item.quantity, 0)}
                   </span>
                 )}
@@ -183,10 +183,10 @@ export default function OrdersPage() {
             <li>
               <NextLink
                 href="/order-history"
-                className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg bg-gray-100"
+                className="flex items-center px-4 py-3 text-lg font-medium text-gray-600 hover:text-rose-600 rounded-lg"
                 onClick={() => setIsSidebarOpen(false)}
               >
-                <ClipboardListIcon size={20} className="mr-3 text-blue-600" /> Order History
+                <ClipboardListIcon size={20} className="mr-3" /> Order History
               </NextLink>
             </li>
           </ul>
@@ -200,7 +200,7 @@ export default function OrdersPage() {
       <main className="flex-1 lg:ml-64 p-6 lg:p-12 relative overflow-hidden ">
         {/* Page Title */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-black drop-shadow-lg">
+          <h1 className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-rose-600 drop-shadow-lg">
             📦 My Order History
           </h1>
           <p className="mt-3 text-gray-600 text-lg">
@@ -218,7 +218,7 @@ export default function OrdersPage() {
             ))}
           </div>
         ) : error ? (
-          <p className="text-center text-red-600 font-semibold max-w-4xl mx-auto">
+          <p className="text-center text-rose-600 font-semibold max-w-4xl mx-auto">
             {error}
           </p>
         ) : orders.length === 0 ? (

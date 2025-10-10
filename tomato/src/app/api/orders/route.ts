@@ -14,16 +14,19 @@ export async function POST(req: NextRequest) {
     const userId = verifyToken(authHeader ?? undefined); 
 
     const body = await req.json();
-    const { date, items, amount, orderStatus } = body;
+    const { date, items, amount, orderStatus, restaurantId } = body;
+    console.log("Incoming order payload:", body);
 
     // Validate required fields
-    if (!date || !items || !amount) {
+    if (!date || !items || !amount || !restaurantId) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
       );
     }
-
+   if (!restaurantId) {
+      return NextResponse.json({ success: false, error: "restaurantId is required" }, { status: 400 });
+    }
     // Validate each item
     for (const item of items) {
       if (!item.id || !item.name || item.price === undefined || item.quantity === undefined) {
@@ -40,6 +43,7 @@ export async function POST(req: NextRequest) {
       date,
       items,
       amount,
+      restaurantId,
       orderStatus: orderStatus || "ordered",
     });
 

@@ -41,6 +41,7 @@ const orderSchema = new mongoose.Schema({
     ref: 'User', 
     required: true,
   },
+  restaurantId: {type: String, required: true},
 });
 
 export default mongoose.models.Order || mongoose.model("Order", orderSchema);

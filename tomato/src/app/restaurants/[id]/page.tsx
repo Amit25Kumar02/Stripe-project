@@ -42,12 +42,13 @@ interface MenuItem {
 
 interface CartItem extends MenuItem {
   quantity: number;
+  restaurantId: string; 
 }
 
-// Haversine distance
+// Haversine distance function
 const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const toRad = (value: number) => (value * Math.PI) / 180;
-  const R = 6371; // km
+  const R = 6371; // Radius of the Earth in km
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const a =
@@ -61,7 +62,8 @@ export default function RestaurantMenuPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const restaurantId = params.id;
+  const restaurantId = params.id as string;
+
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,13 +72,13 @@ export default function RestaurantMenuPage() {
   const [distance, setDistance] = useState<number | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [sortOrder, setSortOrder] = useState<'lowToHigh' | 'highToLow' | 'none'>('none');
-  const [mounted, setMounted] = useState(false); // ✅ mount control
+  const [mounted, setMounted] = useState(false);
 
-  // ✅ Token check
+  //  Token check
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      router.push('/login'); // redirect if no token
+      router.push('/login');
     } else {
       setMounted(true);
     }
@@ -122,7 +124,9 @@ export default function RestaurantMenuPage() {
 
     const fetchMenu = async () => {
       try {
-        const { data } = await axios.get<{ menu: MenuItem[] }>(`/api/restaurants/${restaurantId}/menu`);
+        const { data } = await axios.get<{ menu: MenuItem[] }>(
+          `/api/restaurants/${restaurantId}/menu`
+        );
         setMenu(data.menu);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch menu');
@@ -135,43 +139,68 @@ export default function RestaurantMenuPage() {
     fetchMenu();
   }, [restaurantId, searchParams, mounted]);
 
-  // Sorted menu
+  // Sorting logic
   const sortedMenu = [...menu].sort((a, b) => {
     if (sortOrder === 'lowToHigh') return a.price - b.price;
     if (sortOrder === 'highToLow') return b.price - a.price;
     return 0;
   });
 
-  // Cart logic
+  //  Cart logic with restaurantId
   const addToCart = (item: MenuItem) => {
+    if (!restaurantId) return;
+
     setCart((prev) => {
+      // Prevent mixing restaurants
+      if (prev.length > 0 && prev[0].restaurantId !== restaurantId) {
+        alert('You can only add items from one restaurant at a time.');
+        return prev;
+      }
+
       const exist = prev.find((ci) => ci._id === item._id);
-      if (exist) return prev.map((ci) => (ci._id === item._id ? { ...ci, quantity: ci.quantity + 1 } : ci));
-      return [...prev, { ...item, quantity: 1 }];
+      if (exist)
+        return prev.map((ci) =>
+          ci._id === item._id ? { ...ci, quantity: ci.quantity + 1 } : ci
+        );
+
+      //  include restaurantId
+      return [...prev, { ...item, quantity: 1, restaurantId }];
     });
   };
-  const removeFromCart = (id: string) => setCart((prev) => prev.filter((ci) => ci._id !== id));
+
+  const removeFromCart = (id: string) =>
+    setCart((prev) => prev.filter((ci) => ci._id !== id));
+
   const increaseQuantity = (id: string) =>
-    setCart((prev) => prev.map((ci) => (ci._id === id ? { ...ci, quantity: ci.quantity + 1 } : ci)));
+    setCart((prev) =>
+      prev.map((ci) => (ci._id === id ? { ...ci, quantity: ci.quantity + 1 } : ci))
+    );
+
   const decreaseQuantity = (id: string) =>
     setCart((prev) =>
-      prev.map((ci) => (ci._id === id ? { ...ci, quantity: Math.max(1, ci.quantity - 1) } : ci))
+      prev.map((ci) =>
+        ci._id === id ? { ...ci, quantity: Math.max(1, ci.quantity - 1) } : ci
+      )
     );
-  const calculateTotal = () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const calculateTotal = () =>
+    cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  //  include restaurantId in checkout route
   const handleCheckout = () => {
     const totalAmount = calculateTotal();
     const encodedItems = encodeURIComponent(JSON.stringify(cart));
-    router.push(`/checkout?amount=${totalAmount}&items=${encodedItems}`);
+    const resId = cart[0]?.restaurantId;
+    router.push(`/checkout?amount=${totalAmount}&items=${encodedItems}&restaurantId=${resId}`);
   };
 
-  if (!mounted) return null; // ✅ block UI until auth check
-
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
       {/* Sidebar toggle */}
       <button
-        className="lg:hidden fixed top-4 left-4 bg-blue-600 text-white p-2 rounded-full z-50"
+        className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full z-50"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
       >
         {isSidebarOpen ? <CloseIcon size={24} /> : <MenuIcon size={24} />}
@@ -179,49 +208,52 @@ export default function RestaurantMenuPage() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } lg:translate-x-0 transition-transform p-6 flex flex-col z-40`}
+        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0 transition-transform p-6 flex flex-col z-40`}
       >
         <h2 className="text-3xl font-extrabold text-gray-900 mb-6 flex items-center">
-          <span className="text-red-500 mr-2">Tomato</span> 🍔
+          <span className="text-rose-600 mr-2">Tomato</span> 🍔
         </h2>
         <nav className="flex-grow">
           <ul className="space-y-2">
             <li>
               <Link
                 href="/"
-                className="flex items-center px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600"
+                className="flex items-center px-4 py-3 rounded-lg hover:bg-rose-100 text-gray-600 hover:text-rose-600 transition-colors"
               >
-                <HomeIcon size={20} className="mr-3 text-gray-500" /> Home
+                <HomeIcon size={20} className="mr-3 " /> Home
               </Link>
             </li>
             <li>
               <Link
                 href="/restaurants"
-                className="flex items-center px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600"
+                className="flex items-center px-4 py-3 rounded-lg hover:bg-rose-100 text-gray-600 hover:text-rose-600"
               >
-                <Utensils size={20} className="mr-3 text-gray-500" /> Restaurants
+                <Utensils size={20} className="mr-3" /> Restaurants
               </Link>
             </li>
             <li>
               <Dialog.Root>
-                <Dialog.Trigger className="flex items-center cursor-pointer w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600">
-                  <ShoppingCart size={20} className="mr-3 text-gray-500" /> Cart
+                <Dialog.Trigger className="flex items-center cursor-pointer w-full text-left px-4 py-3 rounded-lg hover:bg-rose-100 text-gray-600 hover:text-rose-600">
+                  <ShoppingCart size={20} className="mr-3" /> Cart
                   {cart.length > 0 && (
-                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="ml-auto bg-rose-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {cart.reduce((total, item) => total + item.quantity, 0)}
                     </span>
                   )}
                 </Dialog.Trigger>
+
                 <Dialog.Portal>
                   <Dialog.Overlay className="fixed inset-0 bg-black/50" />
                   <Dialog.Content className="fixed right-0 top-0 w-80 h-full bg-white p-6 shadow-xl flex flex-col z-50">
                     <div className="flex justify-between items-center mb-6">
                       <Dialog.Title className="text-2xl font-bold">Your Cart</Dialog.Title>
-                      <Dialog.Close className="text-gray-500 hover:text-gray-800">
+                      <Dialog.Close className="text-gray-500 hover:text-gray-800 cursor-pointer">
                         <CloseIcon size={24} />
                       </Dialog.Close>
                     </div>
+
                     {cart.length === 0 ? (
                       <p className="text-gray-500 text-center flex-grow flex items-center justify-center">
                         Your cart is empty.
@@ -247,13 +279,13 @@ export default function RestaurantMenuPage() {
                               <span className="font-semibold">{item.quantity}</span>
                               <button
                                 onClick={() => increaseQuantity(item._id)}
-                                className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
+                                className="p-1 rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300"
                               >
                                 <Plus size={16} />
                               </button>
                               <button
                                 onClick={() => removeFromCart(item._id)}
-                                className="ml-2 text-red-500 hover:text-red-700"
+                                className="ml-2 cursor-pointer text-red-500 hover:text-red-700"
                               >
                                 <CloseIcon size={20} />
                               </button>
@@ -269,7 +301,7 @@ export default function RestaurantMenuPage() {
                       </div>
                       <button
                         onClick={handleCheckout}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition"
+                        className="w-full cursor-pointer bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition"
                         disabled={cart.length === 0}
                       >
                         Proceed to Checkout
@@ -282,34 +314,33 @@ export default function RestaurantMenuPage() {
             <li>
               <Link
                 href="/order-history"
-                className="flex items-center px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600"
+                className="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-rose-50 hover:text-rose-600"
               >
-                <ClipboardListIcon size={20} className="mr-3 text-gray-500" /> Order History
+                <ClipboardListIcon size={20} className="mr-3 " /> Order History
               </Link>
             </li>
           </ul>
         </nav>
       </aside>
 
-      {/* Main Content */}
+      {/* Main content */}
       <main className="flex-1 lg:ml-64 p-4 lg:p-8">
         {loading && <p className="text-center text-gray-500">Loading...</p>}
         {error && <p className="text-center text-red-600 font-semibold">{error}</p>}
 
         {!loading && restaurant && (
           <div className="mb-8">
-            {/* Back Arrow Button */}
             <div className="mb-4">
               <button
                 onClick={() => router.back()}
-                className="flex items-center text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                className="flex items-center text-rose-600 transition-colors cursor-pointer"
               >
                 <ChevronLeft size={24} className="mr-1" />
-                <span className="text-lg font-medium">Back to Restaurants</span>
+                <span className="text-lg font-medium text-rose-600">Back to Restaurants</span>
               </button>
             </div>
 
-            {/* Restaurant Header Section */}
+            {/* Restaurant Header */}
             <div className="relative h-72 w-full text-white rounded-2xl overflow-hidden shadow-xl mb-10 group transition-transform duration-300 hover:scale-[1.02] hover:shadow-2xl">
               <Image
                 src={`https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
@@ -319,32 +350,13 @@ export default function RestaurantMenuPage() {
                 fill
                 className="absolute inset-0 w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-105"
                 unoptimized
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.onerror = null;
-                  target.src = `https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
-                    restaurant.name
-                  )}`;
-                }}
               />
-
-              {/* Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-
-              {/* Content Overlay */}
               <div className="absolute inset-0 flex flex-col justify-end p-6">
-                {/* Restaurant Name */}
-                {/* <h1 className="text-2xl font-extrabold mb-2 drop-shadow-lg tracking-wide">
-                  {restaurant.name}
-                </h1> */}
-
-                {/* Cuisine */}
                 <p className="text-sm font-medium flex items-center mb-2 opacity-90">
                   <Utensils size={16} className="mr-2 text-yellow-400" />
                   {restaurant.cuisine}
                 </p>
-
-                {/* Distance Badge */}
                 {distance && (
                   <p className="text-xs font-medium mb-3">
                     <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full shadow-md">
@@ -352,8 +364,6 @@ export default function RestaurantMenuPage() {
                     </span>
                   </p>
                 )}
-
-                {/* Address + Rating */}
                 <div className="flex justify-between items-center text-sm font-medium">
                   <p className="flex items-center opacity-90 truncate max-w-[70%]">
                     <MapPin size={16} className="mr-1 text-emerald-400" />
@@ -367,15 +377,16 @@ export default function RestaurantMenuPage() {
               </div>
             </div>
 
-
-            {/* Menu & Sorting Section */}
+            {/* Menu Section */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-3xl font-bold text-gray-800">Menu</h2>
               <div className="flex items-center space-x-2">
                 <label className="text-gray-700 font-medium">Sort by:</label>
                 <select
                   value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value as 'lowToHigh' | 'highToLow' | 'none')}
+                  onChange={(e) =>
+                    setSortOrder(e.target.value as 'lowToHigh' | 'highToLow' | 'none')
+                  }
                   className="border-2 border-gray-300 rounded-lg p-2 text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
                 >
                   <option value="none">Default</option>
@@ -396,33 +407,24 @@ export default function RestaurantMenuPage() {
               >
                 <div className="relative h-40 w-full bg-gray-200">
                   <Image
-                    src={
-                      `https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
-                        item.name
-                      )}`
-                    }
+                    src={`https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
+                      item.name
+                    )}`}
                     alt={item.name}
                     width={400}
                     height={150}
                     className="w-full h-40 object-cover"
                     unoptimized
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.onerror = null;
-                      target.src = `https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
-                        item.name
-                      )}`;
-                    }}
                   />
                 </div>
                 <div className="p-4 flex flex-col flex-grow justify-between">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-1 truncate">{item.name}</h3>
+                    <h3 className="text-xl font-bold text-black mb-1 truncate">{item.name}</h3>
                     <p className="text-lg font-semibold text-green-600">${item.price}</p>
                   </div>
                   <button
                     onClick={() => addToCart(item)}
-                    className="mt-4 w-full cursor-pointer bg-blue-600 text-white font-semibold py-2 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                    className="mt-4 w-full cursor-pointer bg-rose-600 text-white font-semibold py-2 rounded-xl hover:bg-rose-700 transition-colors flex items-center justify-center space-x-2"
                   >
                     <ShoppingCart size={20} />
                     <span>Add to Cart</span>

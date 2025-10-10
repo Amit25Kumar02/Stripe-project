@@ -62,7 +62,7 @@ export default function Home() {
 
       {/* Mobile Sidebar Toggle Button */}
       <button
-        className="lg:hidden fixed top-4 left-4 bg-red-600 text-white p-2 rounded-full shadow-lg z-50 focus:outline-none focus:ring-2 focus:ring-red-300"
+        className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full shadow-lg z-50 focus:outline-none focus:ring-2 focus:ring-red-300"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         aria-label="Toggle sidebar"
       >
@@ -76,7 +76,7 @@ export default function Home() {
       >
         <div className="mb-8 text-center lg:text-left">
           <h2 className="text-3xl font-extrabold text-gray-900 flex items-center justify-center lg:justify-start">
-            <span className="text-red-500 mr-2">Tomato</span> 🍔
+            <span className="text-rose-600 mr-2">Tomato</span> 🍔
           </h2>
           <p className="text-sm text-gray-500 mt-1">Your Culinary Companion</p>
         </div>
@@ -88,10 +88,10 @@ export default function Home() {
               <li key={link.name}>
                 <Link
                   href={link.href}
-                  className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition duration-150 ease-in-out group"
+                  className="flex items-center px-4 py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition duration-150 ease-in-out group"
                   onClick={() => setIsSidebarOpen(false)}
                 >
-                  <span className="mr-3 text-gray-500 group-hover:text-blue-500 transition-colors duration-150">
+                  <span className="mr-3 text-gray-500 group-hover:text-rose-600 transition-colors duration-150">
                     {link.icon}
                   </span>
                   {link.name}
@@ -103,9 +103,9 @@ export default function Home() {
             <li>
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center px-4 cursor-pointer py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-red-50 hover:text-blue-600 transition duration-150 ease-in-out group"
+                className="w-full flex items-center px-4 cursor-pointer py-3 text-lg font-medium text-gray-700 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition duration-150 ease-in-out group"
               >
-                <span className="mr-3 text-gray-500 group-hover:text-blue-500 transition-colors duration-150">
+                <span className="mr-3 text-gray-500 group-hover:text-rose-600 transition-colors duration-150">
                   <LogoutIcon size={20} />
                 </span>
                 Logout
@@ -130,7 +130,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-6">
             <Link href="/restaurants">
-              <button className="w-full sm:w-auto bg-white cursor-pointer text-blue-600 font-bold py-4 px-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
+              <button className="w-full sm:w-auto bg-white cursor-pointer text-rose-600 font-bold py-4 px-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
                 Find Nearby Restaurants 📍
               </button>
             </Link>
@@ -150,8 +150,8 @@ export default function Home() {
               className="flex flex-col bg-white justify-between p-6 rounded-2xl shadow-xl transform transition-transform hover:scale-105"
             >
               <div>
-                <h2 className="text-2xl font-bold">{item.name}</h2>
-                <p className="text-gray-400">{item.desc}</p>
+                <h2 className="text-2xl text-rose-600 font-bold">{item.name}</h2>
+                <p className="text-rose-400">{item.desc}</p>
               </div>
               <div className="text-5xl text-right mt-4">{item.name.slice(0, 2)}</div>
             </div>

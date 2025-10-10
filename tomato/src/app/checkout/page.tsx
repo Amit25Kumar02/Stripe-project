@@ -47,7 +47,7 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
   const [isSubscription, setIsSubscription] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<keyof typeof subscriptionPlans>("basic");
 
-  // ✅ Redirect if no token found
+  // Redirect if no token found
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -55,19 +55,20 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
     }
   }, [router]);
 
-  // ✅ Save order to DB after successful payment
+  //  Save order to DB after successful payment
   const handlePaymentSuccess = async () => {
     try {
       const decodedItems = searchParams.get("items");
+      const restaurantId = searchParams.get("restaurantId");
       if (!decodedItems) throw new Error("No cart items found.");
 
       const parsedItems = JSON.parse(decodeURIComponent(decodedItems));
 
-      // ✅ get token from localStorage
+      //  get token from localStorage
       const token = localStorage.getItem("token");
       if (!token) throw new Error("User not logged in");
 
-      // ✅ sanitize items
+      //  sanitize items
       const validatedItems = parsedItems.map(
         (
           item: {
@@ -85,9 +86,10 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
         })
       );
 
-      // ✅ orderData (no userId here, backend extracts from token)
+      //  orderData (no userId here, backend extracts from token)
       const orderData = {
         date: new Date().toISOString(),
+        restaurantId: restaurantId || "unknown",
         items: validatedItems,
         amount: parseFloat(amount.toFixed(2)),
         orderStatus: "ordered",
@@ -98,6 +100,7 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
       });
 
       if (response.data.success) {
+         localStorage.removeItem("cart");
         router.push("/order-history");
       } else {
         throw new Error(response.data.error || "Failed to save order");
@@ -109,7 +112,7 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
     }
   };
 
-  // ✅ trigger save order when paymentSuccess flips true
+  //  trigger save order when paymentSuccess flips true
   useEffect(() => {
     if (paymentSuccess) {
       handlePaymentSuccess();
@@ -180,19 +183,19 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
     <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl p-8 md:p-12 space-y-6">
       <button
         onClick={() => router.back()}
-        className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800 transition-colors mb-4"
+        className="flex items-center cursor-pointer text-rose-600 transition-colors mb-4"
       >
         <ArrowLeft size={24} className="mr-2" />
         <span className="text-lg font-semibold">Back to menu</span>
       </button>
 
-      <h2 className="text-3xl font-extrabold text-gray-900 text-center">
+      <h2 className="text-3xl font-extrabold text-rose-600 text-center">
         Secure Checkout
       </h2>
 
       <div className="flex justify-center items-center gap-4 mb-6">
         <span
-          className={`font-medium ${!isSubscription ? "text-blue-600" : "text-gray-500"
+          className={`font-medium ${!isSubscription ? "text-rose-600" : "text-gray-500"
             }`}
         >
           One-time
@@ -219,7 +222,7 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <p className="text-center text-gray-600 mb-4">
             You&apos;re about to pay{" "}
-            <span className="font-semibold text-blue-600">
+            <span className="font-semibold text-rose-600">
               ${amount.toFixed(2)}
             </span>
           </p>
@@ -243,7 +246,7 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
             </div>
           </div>
           {paymentError && (
-            <p className="text-red-600 font-medium text-center">
+            <p className="text-rose-600 font-medium text-center">
               {paymentError}
             </p>
           )}
@@ -255,7 +258,7 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
           <button
             type="submit"
             disabled={processing || paymentSuccess}
-            className="w-full cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition duration-300 ease-in-out disabled:opacity-50"
+            className="w-full cursor-pointer bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl shadow-lg transition duration-300 ease-in-out disabled:opacity-50"
           >
             {processing ? "Processing..." : `Pay $${amount.toFixed(2)}`}
           </button>
@@ -294,7 +297,7 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
           </div>
 
           {paymentError && (
-            <p className="text-red-600 font-medium text-center">{paymentError}</p>
+            <p className="text-rose-600 font-medium text-center">{paymentError}</p>
           )}
 
           <button

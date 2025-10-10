@@ -7,7 +7,7 @@ import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_APP_URL;
 export default function LoginPage() {
     const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");

@@ -260,7 +260,7 @@ export default function RestaurantsPage() {
         if (filter === "popular") {
           filteredData = filteredData.filter((r) => r.rating >= 4.5);
         } else if (filter === "new") {
-          filteredData = filteredData.slice(-5); // Assuming last 5 are new arrivals
+          filteredData = filteredData.slice(-5);
         } else {
           filteredData = filteredData.filter((r) =>
             r.cuisine.toLowerCase().includes(filter)
@@ -365,7 +365,7 @@ export default function RestaurantsPage() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
       <button
-        className="lg:hidden fixed top-4 left-4 bg-blue-600 text-white p-2 rounded-full shadow-lg z-50 focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer"
+        className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full shadow-lg z-50 focus:outline-none focus:ring-2 focus:ring-rose-300 cursor-pointer"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         aria-label="Toggle sidebar"
       >
@@ -376,7 +376,7 @@ export default function RestaurantsPage() {
         className={`fixed inset-y-0 left-0 w-64 bg-white shadow-lg p-6 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } lg:translate-x-0 transition-transform z-40`}
       >
-        <h2 className="text-2xl font-bold justify-center flex items-center mb-6">
+        <h2 className="text-2xl font-bold justify-center text-rose-600 flex items-center mb-6">
           Categories
         </h2>
         <ul className="space-y-2 mb-[90%]">
@@ -384,7 +384,7 @@ export default function RestaurantsPage() {
             <li key={cat.name}>
               {cat.href ? (
                 <NextLink href={cat.href} passHref>
-                  <span className="flex items-center w-full px-3 py-2 rounded transition hover:bg-blue-50 hover:text-blue-600 cursor-pointer">
+                  <span className="flex items-center w-full px-3 py-2 rounded transition hover:bg-rose-50 hover:text-rose-600 cursor-pointer">
                     <span className="mr-2">{cat.icon}</span>
                     {cat.name}
                   </span>
@@ -392,9 +392,9 @@ export default function RestaurantsPage() {
               ) : (
                 <button
                   onClick={() => handleFilterClick(cat.filter!)}
-                  className={`flex items-center w-full px-3 py-2 rounded transition ${activeFilter === cat.filter
-                    ? 'bg-blue-100 text-blue-600 font-semibold'
-                    : 'hover:bg-blue-50 hover:text-blue-600'
+                  className={`flex items-center w-full px-3 cursor-pointer py-2 rounded transition ${activeFilter === cat.filter
+                    ? 'bg-rose-100 text-rose-600 font-semibold'
+                    : 'hover:bg-rose-50 hover:text-rose-600'
                     }`}
                 >
                   <span className="mr-2">{cat.icon}</span>
@@ -411,7 +411,7 @@ export default function RestaurantsPage() {
 
       <main className="flex-1 lg:ml-64 p-6 overflow-hidden">
         <div className="max-w-7xl mx-auto flex flex-col gap-6">
-          <h1 className="text-4xl font-extrabold text-gray-900 text-center">
+          <h1 className="text-4xl font-extrabold text-rose-600 text-center">
             Nearby Restaurants
           </h1>
           <form
@@ -425,13 +425,13 @@ export default function RestaurantsPage() {
                 placeholder="Enter your city or address..."
                 value={manualLocationQuery}
                 onChange={(e) => setManualLocationQuery(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400"
               />
 
               {/* Search button */}
               <button
                 type="submit"
-                className="w-full sm:w-auto cursor-pointer bg-blue-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+                className="w-full sm:w-auto cursor-pointer bg-rose-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-rose-700 transition"
                 disabled={!manualLocationQuery.trim()}
               >
                 Search
@@ -444,7 +444,7 @@ export default function RestaurantsPage() {
               <button
                 type="button"
                 onClick={fetchUserLocation}
-                className="flex-1 sm:flex-none cursor-pointer bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 transition flex items-center justify-center"
+                className="flex-1 sm:flex-none cursor-pointer bg-rose-600 text-white p-2 rounded-lg hover:bg-green-700 transition flex items-center justify-center"
                 title="Use my current location"
                 disabled={locationLoading}
               >
@@ -484,7 +484,7 @@ export default function RestaurantsPage() {
                 type="button"
                 onClick={handleManualMapSearch}
                 className={`flex-1 sm:flex-none cursor-pointer p-2 rounded-lg transition flex items-center justify-center ${manualSearchMode
-                    ? "bg-orange-500 text-white hover:bg-orange-600"
+                    ? "bg-rose-500 text-white hover:bg-rose-600"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
                 title="Manually select location on map"
@@ -535,7 +535,7 @@ export default function RestaurantsPage() {
           {loading && (
             <p className="text-center text-gray-700">Loading restaurants... 🍽️</p>
           )}
-          {error && <p className="text-center text-red-600">{error}</p>}
+          {error && <p className="text-center text-rose-600">{error}</p>}
 
           {!loading && (
             <div className="mb-8 h-96 w-full rounded-xl shadow-lg overflow-hidden border border-gray-200 bg-white">
@@ -578,11 +578,11 @@ export default function RestaurantsPage() {
                     }}
                   />
                   <div className="p-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                    <h2 className="text-2xl font-bold text-rose-600 mb-2">
                       {restaurant.name}
                     </h2>
                     <p className="text-gray-700 mb-3 flex items-center">
-                      <MapPin className="mr-2 text-blue-500" size={18} />
+                      <MapPin className="mr-2 text-rose-500" size={18} />
                       {restaurant.address}
                     </p>
                     <div className="flex items-center mb-3">
@@ -599,9 +599,9 @@ export default function RestaurantsPage() {
                       </span>
                     </p>
                     {restaurant.distance !== undefined && (userLocation || manualMapLocation) && (
-                      <div className="flex items-center gap-2 text-blue-600 text-sm font-semibold mb-4">
+                      <div className="flex items-center gap-2 text-rose-600 text-sm font-semibold mb-4">
                         <span>Distance: {restaurant.distance.toFixed(2)} km</span>
-                        <Compass size={18} className="text-blue-500" />
+                        <Compass size={18} className="text-rose-500" />
                         <span>Direction: {getDirection(userLocation?.latitude || manualMapLocation!.latitude, userLocation?.longitude || manualMapLocation!.longitude, restaurant.latitude, restaurant.longitude)}</span>
                       </div>
                     )}
@@ -614,7 +614,7 @@ export default function RestaurantsPage() {
                         },
                       }}
                     >
-                      <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-300 cursor-pointer ease-in-out">
+                      <button className="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2 rounded-lg transition duration-300 cursor-pointer ease-in-out">
                         View Menu
                       </button>
                     </NextLink>
@@ -623,7 +623,7 @@ export default function RestaurantsPage() {
                         href={getDirectionsLink(restaurant) || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-2 w-full inline-flex justify-center items-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out"
+                        className="mt-2 w-full inline-flex justify-center items-center bg-gray-200 hover:bg-rose-100 hover:text-rose-600 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out"
                       >
                         <MapPin size={18} className="mr-2" />
                         Get Directions
