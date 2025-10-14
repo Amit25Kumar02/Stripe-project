@@ -241,7 +241,7 @@ export default function RestaurantMenuPage() {
             </li>
             <li>
               <Dialog.Root>
-                <Dialog.Trigger className="flex items-center cursor-pointer w-full text-left px-4 py-3 rounded-lg hover:bg-rose-100 text-gray-600 hover:text-rose-600">
+                <Dialog.Trigger  onClick={() => setIsSidebarOpen(false)} className="flex items-center cursor-pointer w-full text-left px-4 py-3 rounded-lg hover:bg-rose-100 text-gray-600 hover:text-rose-600">
                   <ShoppingCart size={20} className="mr-3" /> Cart
                   {cart.length > 0 && (
                     <span className="ml-auto bg-rose-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
