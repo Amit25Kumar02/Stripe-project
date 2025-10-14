@@ -210,7 +210,7 @@ return (
     <main className="flex-1 lg:ml-64 p-6 lg:p-12 relative overflow-hidden ">
       {/* Page Title */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-rose-600 drop-shadow-lg">
+        <h1 className="text-4xl mt-8 md:mt-0 lg:mt-0 md:text-5xl font-extrabold bg-clip-text text-rose-600 drop-shadow-lg">
            My Order History
         </h1>
         <p className="mt-3 text-gray-600 text-lg">
