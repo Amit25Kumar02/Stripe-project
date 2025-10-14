@@ -7,7 +7,13 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'content.jdmagicbox.com',
+        hostname: 'content.jdmagicbox.com ',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
         port: '',
         pathname: '/**',
       },

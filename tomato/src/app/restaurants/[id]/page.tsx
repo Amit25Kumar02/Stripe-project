@@ -68,7 +68,6 @@ export default function RestaurantMenuPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
-  const [deliveryCharge, setDeliveryCharge] = useState<number>(0);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [sortOrder, setSortOrder] = useState<'lowToHigh' | 'highToLow' | 'none'>('none');
   const [mounted, setMounted] = useState(false);
@@ -92,7 +91,7 @@ export default function RestaurantMenuPage() {
     if (mounted) localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart, mounted]);
 
-  // Fetch restaurant details and menu + delivery discount logic
+  // Fetch restaurant details and menu
   useEffect(() => {
     if (!mounted || !restaurantId) return;
 
@@ -112,24 +111,8 @@ export default function RestaurantMenuPage() {
             data.longitude
           );
           setDistance(dist);
-
-          //  Base delivery charge ($1/km)
-          const baseCharge = dist * 1;
-
-          //  Apply discount based on distance
-          let discountPercent = 0;
-          if (dist < 10) discountPercent = 10;
-          else if (dist >= 10 && dist <= 30) discountPercent = 20;
-          else if (dist > 30 && dist <= 50) discountPercent = 30;
-          else discountPercent = 50;
-
-          const discountAmount = (baseCharge * discountPercent) / 100;
-          const finalCharge = baseCharge - discountAmount;
-
-          setDeliveryCharge(finalCharge);
         } else {
           setDistance(null);
-          setDeliveryCharge(0);
         }
       } catch (err: any) {
         setError(err.message || 'Failed to fetch restaurant details');
@@ -138,9 +121,7 @@ export default function RestaurantMenuPage() {
 
     const fetchMenu = async () => {
       try {
-        const { data } = await axios.get<{ menu: MenuItem[] }>(
-          `/api/restaurants/${restaurantId}/menu`
-        );
+        const { data } = await axios.get<{ menu: MenuItem[] }>(`/api/restaurants/${restaurantId}/menu`);
         setMenu(data.menu);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch menu');
@@ -153,56 +134,57 @@ export default function RestaurantMenuPage() {
     fetchMenu();
   }, [restaurantId, searchParams, mounted]);
 
-  //  Sorting logic
+  // Sorting logic
   const sortedMenu = [...menu].sort((a, b) => {
     if (sortOrder === 'lowToHigh') return a.price - b.price;
     if (sortOrder === 'highToLow') return b.price - a.price;
     return 0;
   });
 
-  //  Cart logic
+  // Cart logic
   const addToCart = (item: MenuItem) => {
     if (!restaurantId) return;
-
     setCart((prev) => {
       if (prev.length > 0 && prev[0].restaurantId !== restaurantId) {
         alert('You can only add items from one restaurant at a time.');
         return prev;
       }
-
       const exist = prev.find((ci) => ci._id === item._id);
-      if (exist)
-        return prev.map((ci) =>
-          ci._id === item._id ? { ...ci, quantity: ci.quantity + 1 } : ci
-        );
-
+      if (exist) return prev.map((ci) => (ci._id === item._id ? { ...ci, quantity: ci.quantity + 1 } : ci));
       return [...prev, { ...item, quantity: 1, restaurantId }];
     });
   };
 
   const removeFromCart = (id: string) => setCart((prev) => prev.filter((ci) => ci._id !== id));
-  const increaseQuantity = (id: string) =>
-    setCart((prev) =>
-      prev.map((ci) => (ci._id === id ? { ...ci, quantity: ci.quantity + 1 } : ci))
-    );
-  const decreaseQuantity = (id: string) =>
-    setCart((prev) =>
-      prev.map((ci) =>
-        ci._id === id ? { ...ci, quantity: Math.max(1, ci.quantity - 1) } : ci
-      )
-    );
+  const increaseQuantity = (id: string) => setCart((prev) => prev.map((ci) => (ci._id === id ? { ...ci, quantity: ci.quantity + 1 } : ci)));
+  const decreaseQuantity = (id: string) => setCart((prev) => prev.map((ci) => (ci._id === id ? { ...ci, quantity: Math.max(1, ci.quantity - 1) } : ci)));
 
-  const calculateTotal = () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const grandTotal = calculateTotal() + deliveryCharge;
+  // Calculate totals and discounts dynamically
+  const totalItemAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  //  Checkout
+  // Delivery charge calculation
+  const baseDeliveryCharge = distance ? distance * 1 : 0;
+  let distanceDiscountPercent = 0;
+  if (distance !== null) {
+    if (distance < 10) distanceDiscountPercent = 10;
+    else if (distance <= 30) distanceDiscountPercent = 20;
+    else if (distance <= 50) distanceDiscountPercent = 30;
+    else distanceDiscountPercent = 50;
+  }
+  const deliveryAfterDistanceDiscount = baseDeliveryCharge - (baseDeliveryCharge * distanceDiscountPercent) / 100;
+  const deliveryChargeFinal = totalItemAmount > 300 ? 0 : deliveryAfterDistanceDiscount;
+
+  // Grand total and extra discount
+  const grandTotalTemp = totalItemAmount + deliveryChargeFinal;
+  const extraDiscount = totalItemAmount > 500 ? grandTotalTemp * 0.2 : 0;
+  const grandTotal = grandTotalTemp - extraDiscount;
+
+  // Checkout
   const handleCheckout = () => {
     const encodedItems = encodeURIComponent(JSON.stringify(cart));
     const resId = cart[0]?.restaurantId;
     router.push(
-      `/checkout?amount=${grandTotal}&items=${encodedItems}&restaurantId=${resId}&deliveryCharge=${deliveryCharge.toFixed(
-        2
-      )}`
+      `/checkout?amount=${grandTotal}&items=${encodedItems}&restaurantId=${resId}&deliveryCharge=${deliveryChargeFinal.toFixed(2)}`
     );
   };
 
@@ -211,22 +193,13 @@ export default function RestaurantMenuPage() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
       {/* Sidebar Toggle */}
-      <button
-        className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full z-30"
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-      >
+      <button className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full z-30" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
         <MenuIcon size={24} />
       </button>
 
       {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } lg:translate-x-0 transition-transform p-6 flex flex-col z-40`}
-      >
-        <button
-          className="lg:hidden absolute top-4 right-4 text-gray-600 hover:text-gray-900"
-          onClick={() => setIsSidebarOpen(false)}
-        >
+      <aside className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform p-6 flex flex-col z-40`}>
+        <button className="lg:hidden absolute top-4 right-4 text-gray-600 hover:text-gray-900" onClick={() => setIsSidebarOpen(false)}>
           <CloseIcon size={24} />
         </button>
 
@@ -243,29 +216,18 @@ export default function RestaurantMenuPage() {
             </li>
 
             <li>
-              <Link
-                href="/restaurants"
-                className="flex items-center px-4 py-3 rounded-lg hover:bg-rose-100"
-              >
+              <Link href="/restaurants" className="flex items-center px-4 py-3 rounded-lg hover:bg-rose-100">
                 <Utensils size={20} className="mr-3" /> Restaurants
               </Link>
             </li>
-
             <li>
               <Dialog.Root>
                 <Dialog.Trigger asChild>
-                  <button className="flex items-center cursor-pointer w-full text-left px-4 py-3 rounded-lg hover:bg-rose-100">
-                    <ShoppingCart size={20} className="mr-3" /> Cart
-                    {cart.length > 0 && (
-                      <span className="ml-auto bg-rose-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {cart.reduce((total, item) => total + item.quantity, 0)}
-                      </span>
-                    )}
-                  </button>
+                  <button className="flex items-center cursor-pointer w-full text-left px-4 py-3 rounded-lg hover:bg-rose-100"> <ShoppingCart size={20} className="mr-3" /> Cart {cart.length > 0 && (<span className="ml-auto bg-rose-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"> {cart.reduce((total, item) => total + item.quantity, 0)} </span>)} </button>
                 </Dialog.Trigger>
 
                 <Dialog.Portal>
-                  <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+                  <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
                   <Dialog.Content className="fixed right-0 top-0 w-80 h-full bg-white p-6 shadow-xl flex flex-col z-50">
                     <div className="flex justify-between items-center mb-6">
                       <Dialog.Title className="text-2xl font-bold">Your Cart</Dialog.Title>
@@ -281,32 +243,20 @@ export default function RestaurantMenuPage() {
                     ) : (
                       <div className="flex-grow overflow-y-auto mb-4">
                         {cart.map((item) => (
-                          <div
-                            key={item._id}
-                            className="flex items-center justify-between py-3 border-b border-gray-200"
-                          >
+                          <div key={item._id} className="flex items-center justify-between py-3 border-b border-gray-200">
                             <div>
                               <h4 className="text-lg font-semibold">{item.name}</h4>
                               <p className="text-sm text-gray-600">${item.price}</p>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => decreaseQuantity(item._id)}
-                                className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
-                              >
+                              <button onClick={() => decreaseQuantity(item._id)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300">
                                 <Minus size={16} />
                               </button>
                               <span className="font-semibold">{item.quantity}</span>
-                              <button
-                                onClick={() => increaseQuantity(item._id)}
-                                className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
-                              >
+                              <button onClick={() => increaseQuantity(item._id)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300">
                                 <Plus size={16} />
                               </button>
-                              <button
-                                onClick={() => removeFromCart(item._id)}
-                                className="ml-2 text-red-500 hover:text-red-700"
-                              >
+                              <button onClick={() => removeFromCart(item._id)} className="ml-2 text-red-500 hover:text-red-700">
                                 <CloseIcon size={20} />
                               </button>
                             </div>
@@ -315,40 +265,41 @@ export default function RestaurantMenuPage() {
                       </div>
                     )}
 
-                    {/* Delivery Discount Info */}
+                    {/* Totals & Discounts */}
                     <div className="border-t pt-4 space-y-2">
-                      {distance && (
-                        <>
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span>Distance:</span>
-                            <span>{distance.toFixed(2)} km</span>
-                          </div>
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span>Base Delivery Charge ($1/km):</span>
-                            <span>${(distance * 1).toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span>Discount:</span>
-                            <span>
-                              {distance < 10
-                                ? '10%'
-                                : distance <= 30
-                                  ? '20%'
-                                  : distance <= 50
-                                    ? '30%'
-                                    : '50%'}
-                            </span>
-                          </div>
-                        </>
-                      )}
-
                       <div className="flex justify-between text-sm text-gray-600">
-                        <span>Final Delivery Charge:</span>
-                        <span>${deliveryCharge.toFixed(2)}</span>
+                        <span>Items Total:</span>
+                        <span>${totalItemAmount.toFixed(2)}</span>
                       </div>
 
-                      <div className="flex justify-between text-xl font-bold">
-                        <span>Total:</span>
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>Base Delivery Charge ($1/km):</span>
+                        <span>${baseDeliveryCharge.toFixed(2)}</span>
+                      </div>
+
+                      {distance !== null && baseDeliveryCharge > 0 && (
+                        <div className="flex justify-between text-sm text-blue-600 font-medium">
+                          <span>Distance Discount:</span>
+                          <span>
+                            {distance < 10 ? '10%' : distance <= 30 ? '20%' : distance <= 50 ? '30%' : '50%'}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between text-sm font-semibold" style={{ color: deliveryChargeFinal > 0 ? '#b91c1c' : '#10b981' }}>
+                        <span>Final Delivery Charge:</span>
+                        <span>{deliveryChargeFinal > 0 ? `$${deliveryChargeFinal.toFixed(2)}` : 'FREE'}</span>
+                      </div>
+
+                      {extraDiscount > 0 && (
+                        <div className="flex justify-between text-sm text-green-600 font-semibold">
+                          <span>Extra Discount (20%):</span>
+                          <span>-${extraDiscount.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between text-xl font-bold mt-2 border-t pt-2">
+                        <span>Grand Total:</span>
                         <span>${grandTotal.toFixed(2)}</span>
                       </div>
 
@@ -363,8 +314,8 @@ export default function RestaurantMenuPage() {
                   </Dialog.Content>
                 </Dialog.Portal>
               </Dialog.Root>
-
             </li>
+
             <li>
               <Link href="/" className="flex items-center px-4 py-3 rounded-lg hover:bg-rose-100">
                 <ClipboardListIcon size={20} className="mr-3" /> Order History
@@ -384,7 +335,7 @@ export default function RestaurantMenuPage() {
             <div className="mb-4 ml-10 md:ml-10 lg:ml-2">
               <button
                 onClick={() => router.back()}
-                className="flex items-center  text-rose-600 transition-colors cursor-pointer"
+                className="flex items-center text-rose-600 transition-colors cursor-pointer"
               >
                 <ChevronLeft size={24} className="mr-1" />
                 <span className="text-lg font-medium text-rose-600">Back to Restaurants</span>
@@ -394,9 +345,7 @@ export default function RestaurantMenuPage() {
             {/* Restaurant Header */}
             <div className="relative h-72 w-full text-white rounded-2xl overflow-hidden shadow-xl mb-10 group transition-transform duration-300 hover:scale-[1.02] hover:shadow-2xl">
               <Image
-                src={`https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
-                  restaurant.name
-                )}`}
+                src={`https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(restaurant.name)}`}
                 alt={restaurant.name}
                 fill
                 className="absolute inset-0 w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-105"
@@ -435,9 +384,7 @@ export default function RestaurantMenuPage() {
                 <label className="text-gray-700 font-medium">Sort by:</label>
                 <select
                   value={sortOrder}
-                  onChange={(e) =>
-                    setSortOrder(e.target.value as 'lowToHigh' | 'highToLow' | 'none')
-                  }
+                  onChange={(e) => setSortOrder(e.target.value as 'lowToHigh' | 'highToLow' | 'none')}
                   className="border-2 border-gray-300 rounded-lg p-2 text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
                 >
                   <option value="none">Default</option>
@@ -452,15 +399,10 @@ export default function RestaurantMenuPage() {
         {!loading && sortedMenu.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {sortedMenu.map((item) => (
-              <div
-                key={item._id}
-                className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col cursor-pointer"
-              >
+              <div key={item._id} className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col cursor-pointer">
                 <div className="relative h-40 w-full bg-gray-200">
                   <Image
-                    src={`https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
-                      item.name
-                    )}`}
+                    src={`https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(item.name)}`}
                     alt={item.name}
                     width={400}
                     height={150}
