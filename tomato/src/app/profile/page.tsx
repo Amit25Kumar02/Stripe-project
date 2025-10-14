@@ -155,7 +155,7 @@ export default function ProfilePage() {
                             localStorage.removeItem("user");
                             router.push("/login");
                         }}
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-rose-100 text-left"
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-rose-100 text-left cursor-pointer"
                     >
                         <LogOut size={18} /> Logout
                     </button>
@@ -223,13 +223,13 @@ export default function ProfilePage() {
                                 <div className="flex gap-4 mt-6">
                                     <button
                                         onClick={handleSave}
-                                        className="flex-1 bg-rose-600 text-white py-3 rounded-lg hover:bg-rose-700 transition-all font-semibold flex items-center justify-center gap-2"
+                                        className="flex-1 bg-rose-600 text-white py-3 rounded-lg hover:bg-rose-700 transition-all font-semibold flex items-center justify-center gap-2 cursor-pointer"
                                     >
                                         <Save size={16} /> Save
                                     </button>
                                     <button
                                         onClick={handleCancel}
-                                        className="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 transition-all font-semibold flex items-center justify-center gap-2"
+                                        className="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 transition-all font-semibold flex items-center justify-center gap-2 cursor-pointer"
                                     >
                                         <XCircle size={16} /> Cancel
                                     </button>
