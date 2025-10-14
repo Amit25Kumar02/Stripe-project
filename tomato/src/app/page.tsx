@@ -207,7 +207,7 @@ export default function Home() {
               key={ad.id}
               className="flex-shrink-0 bg-white rounded-3xl shadow-xl overflow-hidden snap-center hover:scale-105 transition-transform duration-300"
             >
-              <Image src={ad.imageUrl} alt={ad.title} className="w-full h-40 object-cover" width={300} height={150} />
+              <Image src={ad.imageUrl} alt={ad.title} className="w-full h-auto object-cover animate-pulse" width={300} height={150} />
               <div className="p-4">
                 <h3 className="text-xl font-bold text-rose-600">{ad.title}</h3>
                 <p className="text-gray-700">{ad.desc}</p>
