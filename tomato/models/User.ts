@@ -6,6 +6,11 @@ export interface IUser {
   email: string;
   phone: string;
   password: string;
+  address: string;
+  state: string;
+  city: string;
+  pincode: string;
+  dob: Date;
 }
 
 // Check if model already exists to prevent re-compilation
@@ -28,6 +33,22 @@ const userSchema = new Schema<IUser>({
     type: String,
     required: true,
   },
+  address: {
+    type: String,
+  },
+  state: {
+    type: String,
+  },
+  city: {
+    type: String,
+  },
+  pincode: {
+    type: String,
+  },
+  dob: {
+    type: Date,
+  },
+
 }, { timestamps: true }); // `timestamps` adds createdAt and updatedAt fields
 
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', userSchema);

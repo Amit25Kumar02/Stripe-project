@@ -8,6 +8,7 @@ import {
   Utensils,
   CreditCard,
   Menu as MenuIcon,
+  User,
   X as CloseIcon,
   ClipboardListIcon,
   LogOut as LogoutIcon,
@@ -39,6 +40,7 @@ export default function Home() {
     { name: 'Restaurants', href: '/restaurants', icon: <Utensils size={20} /> },
     { name: 'Checkout', href: '/checkout', icon: <CreditCard size={20} /> },
     { name: 'Order History', href: '/order-history', icon: <ClipboardListIcon size={20} /> },
+    { name: 'Profile', href: '/profile', icon: <User size={20} /> },
   ];
 
   const dummyItems = [
@@ -62,11 +64,11 @@ export default function Home() {
 
       {/* Mobile Sidebar Toggle Button */}
       <button
-        className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full shadow-lg z-50 focus:outline-none focus:ring-2 focus:ring-red-300"
+        className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full shadow-lg z-30 focus:outline-none focus:ring-2 focus:ring-red-300"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         aria-label="Toggle sidebar"
       >
-        {isSidebarOpen ? <CloseIcon size={24} /> : <MenuIcon size={24} />}
+         <MenuIcon size={24} />
       </button>
 
       {/* Sidebar */}
@@ -74,6 +76,12 @@ export default function Home() {
         className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
       >
+          <button
+                    className="absolute top-4 right-4 md:hidden text-gray-500 hover:text-rose-600"
+                    onClick={() => setIsSidebarOpen(false)}
+                >
+                    <CloseIcon size={22} />
+                </button>
         <div className="mb-8 text-center lg:text-left">
           <h2 className="text-3xl font-extrabold text-gray-900 flex items-center justify-center lg:justify-start">
             <span className="text-rose-600 mr-2">Tomato</span> 🍔

@@ -42,6 +42,8 @@ const orderSchema = new mongoose.Schema({
     required: true,
   },
   restaurantId: {type: String, required: true},
+  longitude: {type: Number, required: true},
+  latitude: {type: Number, required: true},
 });
 
 export default mongoose.models.Order || mongoose.model("Order", orderSchema);

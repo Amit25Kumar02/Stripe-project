@@ -127,11 +127,11 @@ export default function OrdersPage() {
     <div className="min-h-screen flex bg-gray-50 text-rose-600">
       {/* Mobile toggle button */}
       <button
-        className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full shadow-lg z-50 focus:outline-none focus:ring-2 focus:ring-rose-600 transition-all duration-300"
+        className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full shadow-lg z-30 focus:outline-none focus:ring-2 focus:ring-rose-600 transition-all duration-300"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         aria-label="Toggle sidebar"
       >
-        {isSidebarOpen ? <CloseIcon size={24} /> : <MenuIcon size={24} />}
+        <MenuIcon size={24} />
       </button>
 
       {/* Sidebar */}
@@ -139,6 +139,13 @@ export default function OrdersPage() {
         className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
       >
+        {/* Close button for mobile */}
+        <button
+          className="lg:hidden absolute top-4 right-4 text-gray-600 hover:text-gray-900 focus:outline-none"
+          onClick={() => setIsSidebarOpen(false)}
+        >
+          <CloseIcon size={22} />
+        </button>
         <h2 className="text-3xl font-extrabold text-gray-900 mb-6 flex items-center">
           <span className="text-rose-600 mr-2">Tomato</span> 🍔
         </h2>

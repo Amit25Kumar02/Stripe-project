@@ -15,7 +15,7 @@ export interface IRestaurant extends Document {
   img: string;
   latitude: number;
   longitude: number;
-  menu: IMenuItem[]; // ← added menu field
+  menu: IMenuItem[]; 
 }
 
 const MenuItemSchema: Schema = new Schema({
@@ -33,7 +33,7 @@ const RestaurantSchema: Schema = new Schema({
   img: { type: String, required: true },
   latitude: { type: Number, required: true },
   longitude: { type: Number, required: true },
-  menu: { type: [MenuItemSchema], default: [] }, // ← added here
+  menu: { type: [MenuItemSchema], default: [] }, 
 }, { timestamps: true });
 
 export default mongoose.models.Restaurant || mongoose.model<IRestaurant>("Restaurant", RestaurantSchema);

@@ -200,10 +200,10 @@ export default function RestaurantMenuPage() {
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
       {/* Sidebar toggle */}
       <button
-        className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full z-50"
+        className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full z-30"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
       >
-        {isSidebarOpen ? <CloseIcon size={24} /> : <MenuIcon size={24} />}
+         <MenuIcon size={24} />
       </button>
 
       {/* Sidebar */}
@@ -212,6 +212,12 @@ export default function RestaurantMenuPage() {
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0 transition-transform p-6 flex flex-col z-40`}
       >
+        <button
+          className="lg:hidden absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+          onClick={() => setIsSidebarOpen(false)}
+        >
+          <CloseIcon size={24} />
+        </button>
         <h2 className="text-3xl font-extrabold text-gray-900 mb-6 flex items-center">
           <span className="text-rose-600 mr-2">Tomato</span> 🍔
         </h2>
@@ -330,10 +336,10 @@ export default function RestaurantMenuPage() {
 
         {!loading && restaurant && (
           <div className="mb-8">
-            <div className="mb-4">
+            <div className="mb-4 ml-10 md:ml-10 lg:ml-2">
               <button
                 onClick={() => router.back()}
-                className="flex items-center text-rose-600 transition-colors cursor-pointer"
+                className="flex items-center  text-rose-600 transition-colors cursor-pointer"
               >
                 <ChevronLeft size={24} className="mr-1" />
                 <span className="text-lg font-medium text-rose-600">Back to Restaurants</span>

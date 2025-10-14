@@ -365,17 +365,23 @@ export default function RestaurantsPage() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
       <button
-        className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full shadow-lg z-50 focus:outline-none focus:ring-2 focus:ring-rose-300 cursor-pointer"
+        className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full shadow-lg z-30 focus:outline-none focus:ring-2 focus:ring-rose-300 cursor-pointer"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         aria-label="Toggle sidebar"
       >
-        {isSidebarOpen ? <CloseIcon size={24} /> : <MenuIcon size={24} />}
+        <MenuIcon size={24} />
       </button>
 
       <aside
         className={`fixed inset-y-0 left-0 w-64 bg-white shadow-lg p-6 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } lg:translate-x-0 transition-transform z-40`}
       >
+          <button
+                    className="absolute top-4 right-4 md:hidden text-gray-500 hover:text-rose-600"
+                    onClick={() => setIsSidebarOpen(false)}
+                >
+                    <CloseIcon size={22} />
+                </button>
         <h2 className="text-2xl font-bold justify-center text-rose-600 flex items-center mb-6">
           Categories
         </h2>
@@ -538,7 +544,7 @@ export default function RestaurantsPage() {
           {error && <p className="text-center text-rose-600">{error}</p>}
 
           {!loading && (
-            <div className="mb-8 h-96 w-full rounded-xl shadow-lg overflow-hidden border border-gray-200 bg-white">
+            <div className="mb-8 h-96 w-full rounded-xl shadow-lg overflow-hidden border border-gray-200 bg-white z-0">
               <MapWrapper
                 restaurants={restaurants}
                 center={userLocation || manualMapLocation ? { lat: (userLocation || manualMapLocation)!.latitude, lng: (userLocation || manualMapLocation)!.longitude } : null}

@@ -2,29 +2,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Order from "@/models/order";
-import { verifyToken } from "@/lib/authMiddleware"; 
+import { verifyToken } from "@/lib/authMiddleware";
+import mongoose from "mongoose";
 
 // ----------------- POST: Create new order -----------------
 export async function POST(req: NextRequest) {
   try {
     await dbConnect();
 
-    // ✅ Get token from Authorization header
+    //  Get token from Authorization header
     const authHeader = req.headers.get("authorization");
-    const userId = verifyToken(authHeader ?? undefined); 
+    const userId = verifyToken(authHeader ?? undefined);
+    if (!userId) {
+      return NextResponse.json({ success: false, error: "Invalid or missing token" }, { status: 401 });
+    }
 
     const body = await req.json();
-    const { date, items, amount, orderStatus, restaurantId } = body;
+    const { date, items, amount, orderStatus, restaurantId, latitude, longitude } = body;
     console.log("Incoming order payload:", body);
 
     // Validate required fields
-    if (!date || !items || !amount || !restaurantId) {
+    if (!date || !items || !amount || !restaurantId || !latitude || !longitude) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
       );
     }
-   if (!restaurantId) {
+    if (!restaurantId) {
       return NextResponse.json({ success: false, error: "restaurantId is required" }, { status: 400 });
     }
     // Validate each item
@@ -39,14 +43,16 @@ export async function POST(req: NextRequest) {
 
     // Create and save order
     const newOrder = new Order({
-      userId,
+      userId: new mongoose.Types.ObjectId(userId),
       date,
       items,
       amount,
       restaurantId,
+      latitude,
+      longitude,
       orderStatus: orderStatus || "ordered",
     });
-
+    console.log("Saving order:", newOrder);
     const savedOrder = await newOrder.save();
 
     return NextResponse.json({

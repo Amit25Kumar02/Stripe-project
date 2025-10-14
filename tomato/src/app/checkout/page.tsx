@@ -58,6 +58,10 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
   //  Save order to DB after successful payment
   const handlePaymentSuccess = async () => {
     try {
+        const savedLocation = localStorage.getItem("savedLocation");
+      if (!savedLocation) throw new Error("User location not found.");
+      const { latitude, longitude } = JSON.parse(savedLocation);
+
       const decodedItems = searchParams.get("items");
       const restaurantId = searchParams.get("restaurantId");
       if (!decodedItems) throw new Error("No cart items found.");
@@ -93,6 +97,8 @@ const CheckoutFormComponent: React.FC<CheckoutFormProps> = ({ amount }) => {
         items: validatedItems,
         amount: parseFloat(amount.toFixed(2)),
         orderStatus: "ordered",
+        latitude: latitude || 0,
+        longitude: longitude || 0, 
       };
 
       const response = await axios.post("/api/orders", orderData, {
