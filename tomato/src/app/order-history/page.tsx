@@ -211,7 +211,7 @@ return (
       {/* Page Title */}
       <div className="text-center mb-12">
         <h1 className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-rose-600 drop-shadow-lg">
-          📦 My Order History
+           My Order History
         </h1>
         <p className="mt-3 text-gray-600 text-lg">
           Track and manage all your past orders here
@@ -235,15 +235,15 @@ return (
         <div className="relative z-10 flex flex-col items-center justify-center py-20 bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-200 max-w-3xl mx-auto">
           <ClipboardListIcon
             size={72}
-            className="text-indigo-400 mb-6 animate-bounce"
+            className="text-rose-600 mb-6 animate-bounce"
           />
           <p className="text-2xl font-semibold text-gray-700">No Orders Yet</p>
-          <p className="text-gray-500 mt-2">
-            Start by ordering from your favorite restaurant 🍴
+          <p className="text-gray-500 mt-2 text-center">
+            Start by ordering from your<br /> favorite restaurant
           </p>
           <NextLink
             href="/restaurants"
-            className="mt-6 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-md hover:shadow-lg transition-transform hover:scale-105"
+            className="mt-6 px-6 py-3 bg-gradient-to-r from-rose-600 to-rose-400 text-white rounded-xl shadow-md hover:shadow-lg transition-transform hover:scale-105"
           >
             Explore Restaurants
           </NextLink>
