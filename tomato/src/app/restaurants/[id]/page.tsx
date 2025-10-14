@@ -21,7 +21,6 @@ import Link from 'next/link';
 import * as Dialog from '@radix-ui/react-dialog';
 import Image from 'next/image';
 
-// Interfaces
 interface Restaurant {
   _id: string;
   name: string;
@@ -42,13 +41,12 @@ interface MenuItem {
 
 interface CartItem extends MenuItem {
   quantity: number;
-  restaurantId: string; 
+  restaurantId: string;
 }
 
-// Haversine distance function
 const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const toRad = (value: number) => (value * Math.PI) / 180;
-  const R = 6371; // Radius of the Earth in km
+  const R = 6371; // Earth radius in km
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const a =
@@ -70,18 +68,16 @@ export default function RestaurantMenuPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
+  const [deliveryCharge, setDeliveryCharge] = useState<number>(0);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [sortOrder, setSortOrder] = useState<'lowToHigh' | 'highToLow' | 'none'>('none');
   const [mounted, setMounted] = useState(false);
 
-  //  Token check
+  // Token check
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-    } else {
-      setMounted(true);
-    }
+    if (!token) router.push('/login');
+    else setMounted(true);
   }, [router]);
 
   // Load cart from localStorage
@@ -93,12 +89,10 @@ export default function RestaurantMenuPage() {
 
   // Save cart to localStorage
   useEffect(() => {
-    if (mounted) {
-      localStorage.setItem('cart', JSON.stringify(cart));
-    }
+    if (mounted) localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart, mounted]);
 
-  // Fetch restaurant details and menu
+  // Fetch restaurant details and menu + delivery discount logic
   useEffect(() => {
     if (!mounted || !restaurantId) return;
 
@@ -111,11 +105,31 @@ export default function RestaurantMenuPage() {
         const userLon = searchParams.get('lon');
 
         if (userLat && userLon && data.latitude && data.longitude) {
-          setDistance(
-            haversineDistance(parseFloat(userLat), parseFloat(userLon), data.latitude, data.longitude)
+          const dist = haversineDistance(
+            parseFloat(userLat),
+            parseFloat(userLon),
+            data.latitude,
+            data.longitude
           );
+          setDistance(dist);
+
+          //  Base delivery charge ($1/km)
+          const baseCharge = dist * 1;
+
+          //  Apply discount based on distance
+          let discountPercent = 0;
+          if (dist < 10) discountPercent = 10;
+          else if (dist >= 10 && dist <= 30) discountPercent = 20;
+          else if (dist > 30 && dist <= 50) discountPercent = 30;
+          else discountPercent = 50;
+
+          const discountAmount = (baseCharge * discountPercent) / 100;
+          const finalCharge = baseCharge - discountAmount;
+
+          setDeliveryCharge(finalCharge);
         } else {
           setDistance(null);
+          setDeliveryCharge(0);
         }
       } catch (err: any) {
         setError(err.message || 'Failed to fetch restaurant details');
@@ -139,19 +153,18 @@ export default function RestaurantMenuPage() {
     fetchMenu();
   }, [restaurantId, searchParams, mounted]);
 
-  // Sorting logic
+  //  Sorting logic
   const sortedMenu = [...menu].sort((a, b) => {
     if (sortOrder === 'lowToHigh') return a.price - b.price;
     if (sortOrder === 'highToLow') return b.price - a.price;
     return 0;
   });
 
-  //  Cart logic with restaurantId
+  //  Cart logic
   const addToCart = (item: MenuItem) => {
     if (!restaurantId) return;
 
     setCart((prev) => {
-      // Prevent mixing restaurants
       if (prev.length > 0 && prev[0].restaurantId !== restaurantId) {
         alert('You can only add items from one restaurant at a time.');
         return prev;
@@ -163,19 +176,15 @@ export default function RestaurantMenuPage() {
           ci._id === item._id ? { ...ci, quantity: ci.quantity + 1 } : ci
         );
 
-      //  include restaurantId
       return [...prev, { ...item, quantity: 1, restaurantId }];
     });
   };
 
-  const removeFromCart = (id: string) =>
-    setCart((prev) => prev.filter((ci) => ci._id !== id));
-
+  const removeFromCart = (id: string) => setCart((prev) => prev.filter((ci) => ci._id !== id));
   const increaseQuantity = (id: string) =>
     setCart((prev) =>
       prev.map((ci) => (ci._id === id ? { ...ci, quantity: ci.quantity + 1 } : ci))
     );
-
   const decreaseQuantity = (id: string) =>
     setCart((prev) =>
       prev.map((ci) =>
@@ -183,34 +192,36 @@ export default function RestaurantMenuPage() {
       )
     );
 
-  const calculateTotal = () =>
-    cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const calculateTotal = () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const grandTotal = calculateTotal() + deliveryCharge;
 
-  //  include restaurantId in checkout route
+  //  Checkout
   const handleCheckout = () => {
-    const totalAmount = calculateTotal();
     const encodedItems = encodeURIComponent(JSON.stringify(cart));
     const resId = cart[0]?.restaurantId;
-    router.push(`/checkout?amount=${totalAmount}&items=${encodedItems}&restaurantId=${resId}`);
+    router.push(
+      `/checkout?amount=${grandTotal}&items=${encodedItems}&restaurantId=${resId}&deliveryCharge=${deliveryCharge.toFixed(
+        2
+      )}`
+    );
   };
 
   if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
-      {/* Sidebar toggle */}
+      {/* Sidebar Toggle */}
       <button
         className="lg:hidden fixed top-4 left-4 bg-rose-600 text-white p-2 rounded-full z-30"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
       >
-         <MenuIcon size={24} />
+        <MenuIcon size={24} />
       </button>
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 transition-transform p-6 flex flex-col z-40`}
+        className={`fixed inset-y-0 left-0 w-64 bg-white shadow-xl transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0 transition-transform p-6 flex flex-col z-40`}
       >
         <button
           className="lg:hidden absolute top-4 right-4 text-gray-600 hover:text-gray-900"
@@ -218,36 +229,39 @@ export default function RestaurantMenuPage() {
         >
           <CloseIcon size={24} />
         </button>
+
         <h2 className="text-3xl font-extrabold text-gray-900 mb-6 flex items-center">
           <span className="text-rose-600 mr-2">Tomato</span> 🍔
         </h2>
+
         <nav className="flex-grow">
           <ul className="space-y-2">
             <li>
-              <Link
-                href="/"
-                className="flex items-center px-4 py-3 rounded-lg hover:bg-rose-100 text-gray-600 hover:text-rose-600 transition-colors"
-              >
-                <HomeIcon size={20} className="mr-3 " /> Home
+              <Link href="/" className="flex items-center px-4 py-3 rounded-lg hover:bg-rose-100">
+                <HomeIcon size={20} className="mr-3" /> Home
               </Link>
             </li>
+
             <li>
               <Link
                 href="/restaurants"
-                className="flex items-center px-4 py-3 rounded-lg hover:bg-rose-100 text-gray-600 hover:text-rose-600"
+                className="flex items-center px-4 py-3 rounded-lg hover:bg-rose-100"
               >
                 <Utensils size={20} className="mr-3" /> Restaurants
               </Link>
             </li>
+
             <li>
               <Dialog.Root>
-                <Dialog.Trigger  onClick={() => setIsSidebarOpen(false)} className="flex items-center cursor-pointer w-full text-left px-4 py-3 rounded-lg hover:bg-rose-100 text-gray-600 hover:text-rose-600">
-                  <ShoppingCart size={20} className="mr-3" /> Cart
-                  {cart.length > 0 && (
-                    <span className="ml-auto bg-rose-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {cart.reduce((total, item) => total + item.quantity, 0)}
-                    </span>
-                  )}
+                <Dialog.Trigger asChild>
+                  <button className="flex items-center cursor-pointer w-full text-left px-4 py-3 rounded-lg hover:bg-rose-100">
+                    <ShoppingCart size={20} className="mr-3" /> Cart
+                    {cart.length > 0 && (
+                      <span className="ml-auto bg-rose-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {cart.reduce((total, item) => total + item.quantity, 0)}
+                      </span>
+                    )}
+                  </button>
                 </Dialog.Trigger>
 
                 <Dialog.Portal>
@@ -269,7 +283,7 @@ export default function RestaurantMenuPage() {
                         {cart.map((item) => (
                           <div
                             key={item._id}
-                            className="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0"
+                            className="flex items-center justify-between py-3 border-b border-gray-200"
                           >
                             <div>
                               <h4 className="text-lg font-semibold">{item.name}</h4>
@@ -285,13 +299,13 @@ export default function RestaurantMenuPage() {
                               <span className="font-semibold">{item.quantity}</span>
                               <button
                                 onClick={() => increaseQuantity(item._id)}
-                                className="p-1 rounded-full cursor-pointer bg-gray-200 hover:bg-gray-300"
+                                className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
                               >
                                 <Plus size={16} />
                               </button>
                               <button
                                 onClick={() => removeFromCart(item._id)}
-                                className="ml-2 cursor-pointer text-red-500 hover:text-red-700"
+                                className="ml-2 text-red-500 hover:text-red-700"
                               >
                                 <CloseIcon size={20} />
                               </button>
@@ -300,14 +314,47 @@ export default function RestaurantMenuPage() {
                         ))}
                       </div>
                     )}
-                    <div className="border-t pt-4">
-                      <div className="flex justify-between items-center mb-4 text-xl font-bold">
-                        <span>Total:</span>
-                        <span>${calculateTotal().toFixed(2)}</span>
+
+                    {/* Delivery Discount Info */}
+                    <div className="border-t pt-4 space-y-2">
+                      {distance && (
+                        <>
+                          <div className="flex justify-between text-sm text-gray-600">
+                            <span>Distance:</span>
+                            <span>{distance.toFixed(2)} km</span>
+                          </div>
+                          <div className="flex justify-between text-sm text-gray-600">
+                            <span>Base Delivery Charge ($1/km):</span>
+                            <span>${(distance * 1).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm text-gray-600">
+                            <span>Discount:</span>
+                            <span>
+                              {distance < 10
+                                ? '10%'
+                                : distance <= 30
+                                  ? '20%'
+                                  : distance <= 50
+                                    ? '30%'
+                                    : '50%'}
+                            </span>
+                          </div>
+                        </>
+                      )}
+
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>Final Delivery Charge:</span>
+                        <span>${deliveryCharge.toFixed(2)}</span>
                       </div>
+
+                      <div className="flex justify-between text-xl font-bold">
+                        <span>Total:</span>
+                        <span>${grandTotal.toFixed(2)}</span>
+                      </div>
+
                       <button
                         onClick={handleCheckout}
-                        className="w-full cursor-pointer bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition"
                         disabled={cart.length === 0}
                       >
                         Proceed to Checkout
@@ -316,13 +363,11 @@ export default function RestaurantMenuPage() {
                   </Dialog.Content>
                 </Dialog.Portal>
               </Dialog.Root>
+
             </li>
             <li>
-              <Link
-                href="/order-history"
-                className="flex items-center px-4 py-3 rounded-lg text-gray-600 hover:bg-rose-50 hover:text-rose-600"
-              >
-                <ClipboardListIcon size={20} className="mr-3 " /> Order History
+              <Link href="/" className="flex items-center px-4 py-3 rounded-lg hover:bg-rose-100">
+                <ClipboardListIcon size={20} className="mr-3" /> Order History
               </Link>
             </li>
           </ul>
