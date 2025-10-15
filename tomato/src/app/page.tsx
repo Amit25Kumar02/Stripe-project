@@ -25,7 +25,6 @@ interface Advertisement {
 export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
-  const [distance] = useState<number>(12); 
   const router = useRouter();
 
   // Example advertisements
@@ -69,16 +68,6 @@ export default function Home() {
     localStorage.removeItem('user');
     router.push('/login'); 
   };
-
-  // Calculate delivery discount based on distance
-  const baseCharge = distance * 1;
-  let discountPercent = 0;
-  if (distance < 10) discountPercent = 10;
-  else if (distance <= 30) discountPercent = 20;
-  else if (distance <= 50) discountPercent = 30;
-  else discountPercent = 50;
-  const discountAmount = (baseCharge * discountPercent) / 100;
-  const finalDeliveryCharge = baseCharge - discountAmount;
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col lg:flex-row">
