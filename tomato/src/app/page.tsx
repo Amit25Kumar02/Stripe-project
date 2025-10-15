@@ -29,8 +29,8 @@ export default function Home() {
 
   // Example advertisements
   const [ads] = useState<Advertisement[]>([
-    { id: 1, title: 'Weekend Special!', desc: 'Get 20% off on all orders above ₹500', imageUrl: '/sale-banner.webp' },
-    { id: 2, title: 'Free Delivery', desc: 'On orders above ₹300', imageUrl: '/free-home.png' },
+    { id: 1, title: 'Weekend Special!', desc: 'Get 20% off on all orders above $500', imageUrl: '/sale-banner.webp' },
+    { id: 2, title: 'Free Delivery', desc: 'On orders above $300', imageUrl: '/free-home.png' },
     { id: 3, title: 'New Restaurant Launch', desc: 'Try delicious dishes now!', imageUrl: '/grand-opening.webp' },
   ]);
 
@@ -57,8 +57,8 @@ export default function Home() {
   const dummyItems = [
     { name: '🍕 Pepperoni Pizza', desc: 'Hot & cheesy' },
     { name: '🍔 Classic Burger', desc: 'Juicy & fresh' },
-    { name: '🥗 Healthy Salad', desc: 'Fresh veggies' },
     { name: '🍣 Sushi Platter', desc: 'Ocean fresh' },
+    { name: '🥗 Healthy Salad', desc: 'Fresh veggies' },
     { name: '🌮 Tacos Fiesta', desc: 'Spicy & tangy' },
     { name: '🍩 Donut Treat', desc: 'Sweet delight' },
   ];
@@ -86,7 +86,7 @@ export default function Home() {
           } lg:translate-x-0 transition-transform duration-300 ease-in-out p-6 flex flex-col z-40`}
       >
         <button
-          className="absolute top-4 right-4 md:hidden text-gray-500 hover:text-rose-600"
+          className="absolute top-4 right-4 lg:hidden text-gray-500 hover:text-rose-600"
           onClick={() => setIsSidebarOpen(false)}
         >
           <CloseIcon size={22} />

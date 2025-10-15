@@ -165,13 +165,13 @@ export default function ProfilePage() {
             {/* Main Content */}
             <main className="flex-1 p-6 md:p-10 overflow-y-auto">
                 <button
-                    className="md:hidden mb-4 bg-rose-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                    className="fixed md:hidden mb-4 bg-rose-600 text-white px-2 py-2 rounded-full flex items-center gap-2"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
                 >
-                    <MenuIcon size={18} /> Menu
+                    <MenuIcon size={18} />
                 </button>
 
-                <h1 className="text-3xl font-bold text-rose-600 mb-6">Profile</h1>
+                <h1 className="text-2xl mt-12 md:mt-0 md:text-3xl font-bold text-rose-600 mb-6">Profile</h1>
 
                 {loading ? (
                     <p className="text-gray-500">Loading profile...</p>
