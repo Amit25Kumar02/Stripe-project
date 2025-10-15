@@ -172,33 +172,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Delivery Discount Card */}
-        <div className="bg-white shadow-xl rounded-3xl p-6 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div>
-            <h2 className="text-2xl font-bold text-rose-600 mb-2">Delivery Discount</h2>
-            <p className="text-gray-700 text-lg">
-              Distance: <span className="font-semibold">{distance} km</span>
-            </p>
-            <p className="text-gray-700 text-lg">
-              Base Charge: <span className="font-semibold">${baseCharge.toFixed(2)}</span>
-            </p>
-            <p className="text-gray-700 text-lg">
-              Discount: <span className="font-semibold">{discountPercent}%</span>
-            </p>
-            <p className="text-green-600 text-xl font-bold mt-2">
-              Final Delivery Charge: ${finalDeliveryCharge.toFixed(2)}
-            </p>
-          </div>
-          <div className="flex-1">
-            <Image
-              src="/discount.png"
-              alt="Delivery Discount"
-              className="rounded-2xl w-full h-full object-cover"
-              width={300}
-              height={150}
-            />
-          </div>
-        </div>
+      
 
         {/* Advertisement Carousel */}
         <div className="w-full grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 py-4">
