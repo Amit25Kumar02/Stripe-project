@@ -249,14 +249,14 @@ export default function RestaurantMenuPage() {
                               <p className="text-sm text-gray-600">${item.price}</p>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <button onClick={() => decreaseQuantity(item._id)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300">
+                              <button onClick={() => decreaseQuantity(item._id)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300 cursor-pointer">
                                 <Minus size={16} />
                               </button>
                               <span className="font-semibold">{item.quantity}</span>
-                              <button onClick={() => increaseQuantity(item._id)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300">
+                              <button onClick={() => increaseQuantity(item._id)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300 cursor-pointer">
                                 <Plus size={16} />
                               </button>
-                              <button onClick={() => removeFromCart(item._id)} className="ml-2 text-red-500 hover:text-red-700">
+                              <button onClick={() => removeFromCart(item._id)} className="ml-2 text-red-500 hover:text-red-700 cursor-pointer">
                                 <CloseIcon size={20} />
                               </button>
                             </div>
@@ -305,7 +305,7 @@ export default function RestaurantMenuPage() {
 
                       <button
                         onClick={handleCheckout}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={cart.length === 0}
                       >
                         Proceed to Checkout
