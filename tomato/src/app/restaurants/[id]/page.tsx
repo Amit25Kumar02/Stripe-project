@@ -385,7 +385,7 @@ export default function RestaurantMenuPage() {
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as 'lowToHigh' | 'highToLow' | 'none')}
-                  className="border-2 border-gray-300 rounded-lg p-2 text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                  className="border-2 border-gray-300 cursor-pointer rounded-lg p-2 text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
                 >
                   <option value="none">Default</option>
                   <option value="lowToHigh">Price: Low to High</option>
