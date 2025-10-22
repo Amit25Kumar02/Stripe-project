@@ -141,7 +141,7 @@ export default function NotificationsPage() {
 
     // Mark all as read
     const markAllAsRead = async () => {
-      toast.success("This feature will be available soon!");
+        toast.success("This feature will be available soon!");
         // try {
         //     const token = localStorage.getItem("token");
         //     await axios.patch(`/api/notifications/read-all`, {}, {
@@ -292,8 +292,8 @@ export default function NotificationsPage() {
                             key={item.label}
                             href={item.href}
                             className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 relative ${item.active
-                                    ? "bg-gradient-to-r from-rose-600 to-rose-600 text-white shadow-lg shadow-rose-200"
-                                    : "text-gray-600 hover:bg-rose-100 hover:shadow-lg hover:text-rose-600"
+                                ? "bg-gradient-to-r from-rose-600 to-rose-600 text-white shadow-lg shadow-rose-200"
+                                : "text-gray-600 hover:bg-rose-100 hover:shadow-lg hover:text-rose-600"
                                 }`}
                             onClick={() => setSidebarOpen(false)}
                         >
@@ -325,9 +325,9 @@ export default function NotificationsPage() {
             {/* Main Content */}
             <main className="flex-1 lg:ml-64 p-6 lg:p-8 overflow-y-auto">
                 {/* Mobile Header */}
-                <div className="lg:hidden flex items-center justify-between mb-8">
+                <div className="lg:hidden fixed flex items-center justify-between mb-8">
                     <button
-                        className="p-3 bg-white rounded-2xl shadow-lg text-rose-600 hover:shadow-xl transition-shadow"
+                        className="p-3 bg-rose-600 rounded-full shadow-lg text-white hover:shadow-xl transition-shadow"
                         onClick={() => setSidebarOpen(!sidebarOpen)}
                     >
                         <Menu size={20} />
@@ -336,7 +336,7 @@ export default function NotificationsPage() {
                 </div>
 
                 {/* Header */}
-                <div className="max-w-6xl mx-auto">
+                <div className="max-w-6xl mt-12 lg:mt-2 mx-auto">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
                         <div>
                             <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
@@ -390,7 +390,7 @@ export default function NotificationsPage() {
                     </div>
 
                     {/* Filter Tabs */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 mb-6 inline-flex">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2 mb-6 inline-flex w-full md:w-fit ">
                         {[
                             { key: 'all', label: 'All', count: notifications.length },
                             { key: 'unread', label: 'Unread', count: unreadCount },
@@ -400,16 +400,16 @@ export default function NotificationsPage() {
                                 key={tab.key}
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 onClick={() => setFilter(tab.key as any)}
-                                className={`px-4 py-2 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-2 ${filter === tab.key
-                                        ? 'bg-rose-500 text-white shadow-md'
-                                        : 'text-gray-600 hover:bg-gray-50'
+                                className={`px-2 md:px-4 py-2 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-2 ${filter === tab.key
+                                    ? 'bg-rose-500 text-white shadow-md'
+                                    : 'text-gray-600 hover:bg-gray-50'
                                     }`}
                             >
-                                <span>{tab.label}</span>
+                                <span className="text-xs" >{tab.label}</span>
                                 {tab.count > 0 && (
                                     <span className={`text-xs px-1.5 py-0.5 rounded-full ${filter === tab.key
-                                            ? 'bg-white text-rose-500'
-                                            : 'bg-gray-200 text-gray-600'
+                                        ? 'bg-white text-rose-500'
+                                        : 'bg-gray-200 text-gray-600'
                                         }`}>
                                         {tab.count}
                                     </span>
@@ -455,18 +455,22 @@ export default function NotificationsPage() {
 
                                             {/* Notification Content */}
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-start justify-between">
+                                                <div className="flex flex-col md:flex-row md:items-start md:justify-between">
                                                     <div>
-                                                        <h3 className={`font-semibold ${!notification.read ? 'text-gray-900' : 'text-gray-700'
-                                                            }`}>
+                                                        <h3
+                                                            className={`font-semibold ${!notification.read ? "text-gray-900" : "text-gray-700"
+                                                                }`}
+                                                        >
                                                             {notification.title}
                                                         </h3>
                                                         <p className="text-gray-600 mt-1">{notification.message}</p>
                                                     </div>
+
                                                     <div className="flex items-center gap-2 flex-shrink-0 ml-4">
                                                         <span className="text-sm text-gray-500 whitespace-nowrap">
                                                             {formatRelativeTime(notification.createdAt)}
                                                         </span>
+
                                                         {!notification.read && (
                                                             <button
                                                                 onClick={() => markAsRead}
@@ -476,6 +480,7 @@ export default function NotificationsPage() {
                                                                 <CheckCircle size={16} />
                                                             </button>
                                                         )}
+
                                                         <button
                                                             onClick={() => deleteNotification}
                                                             className="p-1 text-gray-400 cursor-pointer hover:text-red-600 transition-colors"
@@ -488,7 +493,7 @@ export default function NotificationsPage() {
 
                                                 {notification.actionUrl && (
                                                     <button
-                                                        onClick={() => router.push(notification.actionUrl!)}
+                                                       
                                                         className="mt-3 text-rose-600 hover:text-rose-700 text-sm font-medium flex items-center gap-1"
                                                     >
                                                         View details
@@ -496,6 +501,7 @@ export default function NotificationsPage() {
                                                     </button>
                                                 )}
                                             </div>
+
                                         </div>
                                     </div>
                                 ))}
