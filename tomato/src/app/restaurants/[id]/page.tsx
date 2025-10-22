@@ -317,7 +317,7 @@ export default function RestaurantMenuPage() {
             </li>
 
             <li>
-              <Link href="/" className="flex items-center px-4 py-3 rounded-lg hover:bg-rose-100">
+              <Link href="/order-history" className="flex items-center px-4 py-3 rounded-lg hover:bg-rose-100">
                 <ClipboardListIcon size={20} className="mr-3" /> Order History
               </Link>
             </li>
