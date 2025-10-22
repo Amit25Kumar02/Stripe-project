@@ -187,7 +187,7 @@ export default function ProfilePage() {
                     {[
                         { icon: Home, label: "Home", href: "/" },
                         { icon: User, label: "Profile", href: "/profile", active: true },
-                        { icon: Bell, label: "Notifications", href: "/notifications" },
+                        { icon: Bell, label: "Notifications", href: "/notification" },
                     ].map((item) => (
                         <Link
                             key={item.label}
