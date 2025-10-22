@@ -222,9 +222,9 @@ export default function ProfilePage() {
             {/* Main Content */}
             <main className="flex-1 lg:ml-64 p-6 lg:p-8 overflow-y-auto">
                 {/* Mobile Header */}
-                <div className="lg:hidden flex items-center justify-between mb-8">
+                <div className="fixed lg:hidden flex items-center justify-between mb-8">
                     <button
-                        className="p-3 bg-white rounded-2xl shadow-lg text-rose-600 hover:shadow-xl transition-shadow"
+                        className="p-3 bg-rose-600 rounded-full shadow-lg text-white hover:shadow-xl transition-shadow"
                         onClick={() => setSidebarOpen(!sidebarOpen)}
                     >
                         <Menu size={20} />
@@ -232,7 +232,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Profile Header */}
-                <div className="max-w-6xl mx-auto">
+                <div className="max-w-6xl mt-12 lg:mt-0 mx-auto">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
                         <div>
                             <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
