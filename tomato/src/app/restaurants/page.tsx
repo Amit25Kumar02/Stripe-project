@@ -19,9 +19,13 @@ import {
   LocateFixed,
   Focus,
   Compass,
+  Heart,
+  Share2,
+  Navigation,
 } from 'lucide-react';
 import NextLink from 'next/link';
 import axios from 'axios';
+import Link from 'next/link';
 
 
 // Dynamically import Map component (will only load on client side)
@@ -38,6 +42,7 @@ interface Restaurant {
   latitude: number;
   longitude: number;
   distance?: number;
+  isFeatured?: boolean;
 }
 
 interface SavedLocation {
@@ -148,9 +153,10 @@ export default function RestaurantsPage() {
   const [manualMapLocation, setManualMapLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [userLocationClicked, setUserLocationClicked] = useState(false);
   const [manualLocationClicked, setManualLocationClicked] = useState(false);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const router = useRouter();
   useEffect(() => {
-      const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token');
     if (!token) {
       router.push('/login'); // redirect if no token
     } else {
@@ -172,7 +178,22 @@ export default function RestaurantsPage() {
         }
       }
     }
+    // Load favorites from localStorage
+    const savedFavorites = localStorage.getItem('favorites');
+    if (savedFavorites) {
+      setFavorites(new Set(JSON.parse(savedFavorites)));
+    }
   }, [router]);
+  const toggleFavorite = (restaurantId: string) => {
+    const newFavorites = new Set(favorites);
+    if (newFavorites.has(restaurantId)) {
+      newFavorites.delete(restaurantId);
+    } else {
+      newFavorites.add(restaurantId);
+    }
+    setFavorites(newFavorites);
+    localStorage.setItem('favorites', JSON.stringify([...newFavorites]));
+  };
 
   const saveLocationToStorage = (locationData: SavedLocation) => {
     localStorage.setItem('savedLocation', JSON.stringify(locationData));
@@ -191,7 +212,7 @@ export default function RestaurantsPage() {
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation({ latitude, longitude });
-          
+
           // Save to localStorage
           const locationData: SavedLocation = {
             latitude,
@@ -200,7 +221,7 @@ export default function RestaurantsPage() {
             timestamp: Date.now()
           };
           saveLocationToStorage(locationData);
-          
+
           setLocationLoading(false);
         },
         (error) => {
@@ -282,17 +303,17 @@ export default function RestaurantsPage() {
 
   useEffect(() => {
     if (!mounted) return;
-      if (userLocationClicked && userLocation) {
-        fetchRestaurants(userLocation.latitude, userLocation.longitude, undefined, activeFilter, searchRadius);
-        setUserLocationClicked(false);
-      } else if (manualLocationClicked && manualMapLocation) {
-        fetchRestaurants(manualMapLocation.latitude, manualMapLocation.longitude, undefined, activeFilter, searchRadius);
-        setManualLocationClicked(false);
-      } else if (manualLocationQuery) {
-        fetchRestaurants(undefined, undefined, manualLocationQuery, activeFilter, searchRadius);
-      } else {
-        fetchRestaurants(undefined, undefined, undefined, activeFilter, searchRadius);
-      }
+    if (userLocationClicked && userLocation) {
+      fetchRestaurants(userLocation.latitude, userLocation.longitude, undefined, activeFilter, searchRadius);
+      setUserLocationClicked(false);
+    } else if (manualLocationClicked && manualMapLocation) {
+      fetchRestaurants(manualMapLocation.latitude, manualMapLocation.longitude, undefined, activeFilter, searchRadius);
+      setManualLocationClicked(false);
+    } else if (manualLocationQuery) {
+      fetchRestaurants(undefined, undefined, manualLocationQuery, activeFilter, searchRadius);
+    } else {
+      fetchRestaurants(undefined, undefined, undefined, activeFilter, searchRadius);
+    }
   }, [
     activeFilter,
     mounted,
@@ -314,7 +335,7 @@ export default function RestaurantsPage() {
         timestamp: Date.now()
       } as SavedLocation;
       saveLocationToStorage(locationData);
-      
+
       setUserLocation(null);
       setManualMapLocation(null);
       setManualSearchMode(false);
@@ -329,7 +350,7 @@ export default function RestaurantsPage() {
 
   const handleMapClick = (lat: number, lng: number) => {
     setManualMapLocation({ latitude: lat, longitude: lng });
-    
+
     // Save manual map location to localStorage
     const locationData: SavedLocation = {
       latitude: lat,
@@ -338,7 +359,7 @@ export default function RestaurantsPage() {
       timestamp: Date.now()
     };
     saveLocationToStorage(locationData);
-    
+
     setUserLocation(null);
     setManualLocationQuery('');
     setUserLocationClicked(false);
@@ -376,12 +397,12 @@ export default function RestaurantsPage() {
         className={`fixed inset-y-0 left-0 w-64 bg-white shadow-lg p-6 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } lg:translate-x-0 transition-transform z-40`}
       >
-          <button
-                    className="absolute top-4 right-4 md:hidden text-gray-500 hover:text-rose-600"
-                    onClick={() => setIsSidebarOpen(false)}
-                >
-                    <CloseIcon size={22} />
-                </button>
+        <button
+          className="absolute top-4 right-4 md:hidden text-gray-500 hover:text-rose-600"
+          onClick={() => setIsSidebarOpen(false)}
+        >
+          <CloseIcon size={22} />
+        </button>
         <h2 className="text-2xl font-bold justify-center text-rose-600 flex items-center mb-6">
           Categories
         </h2>
@@ -415,11 +436,22 @@ export default function RestaurantsPage() {
         </div>
       </aside>
 
-      <main className="flex-1 lg:ml-64 p-6 overflow-hidden">
+      <main className="flex-1 mt-12 lg:mt-0 lg:ml-64 p-6 overflow-hidden">
         <div className="max-w-7xl mx-auto flex flex-col gap-6">
-          <h1 className="text-4xl font-extrabold text-rose-600 text-center">
-            Nearby Restaurants
-          </h1>
+          <div className='md:flex justify-between'>
+            <div>
+              <h1 className="text-4xl lg:text-5xl font-black text-gray-900 mb-2">
+                Discover <span className="bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">Restaurants</span>
+              </h1>
+              <p className="text-gray-600 text-lg">Find the perfect dining experience near you</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="hidden lg:flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-2 shadow-lg">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-600">{restaurants.length} places found</span>
+              </div>
+            </div>
+          </div>
           <form
             onSubmit={handleSearch}
             className="flex flex-col items-center justify-center gap-3 mb-6 w-full"
@@ -479,8 +511,7 @@ export default function RestaurantsPage() {
                   </svg>
                 ) : (
                   <div className="flex items-center gap-2">
-                  <LocateFixed size={20} />
-                  {/* <p>Use my current location</p> */}
+                    <LocateFixed size={20} />
                   </div>
                 )}
               </button>
@@ -490,19 +521,18 @@ export default function RestaurantsPage() {
                 type="button"
                 onClick={handleManualMapSearch}
                 className={`flex-1 sm:flex-none cursor-pointer p-2 rounded-lg transition flex items-center justify-center ${manualSearchMode
-                    ? "bg-rose-500 text-white hover:bg-rose-600"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-rose-500 text-white hover:bg-rose-600"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
                 title="Manually select location on map"
               >
                 <div className="flex items-center gap-2">
                   <Focus size={20} />
-                  {/* <p>Manually select location on map</p> */}
                 </div>
               </button>
             </div>
           </form>
-                      
+
 
           {(userLocation || manualMapLocation) && (
             <div className="flex justify-center items-center gap-3 mb-4">
@@ -556,96 +586,169 @@ export default function RestaurantsPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {restaurants.length > 0 ? (
-              restaurants.map((restaurant, index) => (
-                <div
-                 key={restaurant._id || `${restaurant.name}-${index}`}
-                  className="bg-white rounded-xl shadow-md overflow-hidden transform transition duration-300 ease-in-out hover:scale-105 hover:shadow-xl"
-                >
-                  <Image
-                    src={
-                      restaurant.imageUrl ||
-                      `https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
-                        restaurant.name
-                      )}`
-                    }
-                    alt={restaurant.name}
-                    width={600}
-                    height={400}
-                    className="w-full h-48 object-cover"
-                    unoptimized
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.onerror = null;
-                      target.src = `https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
-                        restaurant.name
-                      )}`;
-                    }}
-                  />
-                  <div className="p-6">
-                    <h2 className="text-2xl font-bold text-rose-600 mb-2">
-                      {restaurant.name}
-                    </h2>
-                    <p className="text-gray-700 mb-3 flex items-center">
-                      <MapPin className="mr-2 text-rose-500" size={18} />
-                      {restaurant.address}
-                    </p>
-                    <div className="flex items-center mb-3">
-                      <Star className="text-yellow-500 mr-2" size={18} />
-                      <span className="text-gray-800 font-semibold">
-                        {restaurant.rating.toFixed(1)}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 flex items-center mb-4">
-                      <DollarSign className="text-green-600 mr-2" size={18} />
-                      Price Range:
-                      <span className="font-semibold ml-1">
-                        {restaurant.priceRange}
-                      </span>
-                    </p>
-                    {restaurant.distance !== undefined && (userLocation || manualMapLocation) && (
-                      <div className="flex items-center gap-2 text-rose-600 text-sm font-semibold mb-4">
-                        <span>Distance: {restaurant.distance.toFixed(2)} km</span>
-                        <Compass size={18} className="text-rose-500" />
-                        <span>Direction: {getDirection(userLocation?.latitude || manualMapLocation!.latitude, userLocation?.longitude || manualMapLocation!.longitude, restaurant.latitude, restaurant.longitude)}</span>
-                      </div>
-                    )}
-                    <NextLink
-                      href={{
-                        pathname: `/restaurants/${restaurant._id}`,
-                        query: {
-                          lat: (userLocation || manualMapLocation)?.latitude,
-                          lon: (userLocation || manualMapLocation)?.longitude,
-                        },
-                      }}
-                    >
-                      <button className="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2 rounded-lg transition duration-300 cursor-pointer ease-in-out">
-                        View Menu
-                      </button>
-                    </NextLink>
-                    {(userLocation || manualMapLocation) && (
-                      <a
-                        href={getDirectionsLink(restaurant) || '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 w-full inline-flex justify-center items-center bg-gray-200 hover:bg-rose-100 hover:text-rose-600 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out"
-                      >
-                        <MapPin size={18} className="mr-2" />
-                        Get Directions
-                      </a>
-                    )}
-                  </div>
+          {/* Results Grid */}
+          {!loading && restaurants.length > 0 && (
+            <section>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-3xl font-black text-gray-900 mb-2">
+                    {restaurants.length} Restaurants Found
+                  </h2>
+                  <p className="text-gray-600">Sorted by distance from your location</p>
                 </div>
-              ))
-            ) : (
-              !loading && (
-                <p className="col-span-full text-center text-gray-500">
-                  No restaurants found. Try a different search!
-                </p>
-              )
-            )}
-          </div>
+                <div className="hidden lg:flex items-center gap-2 text-sm text-gray-500">
+                  <Sparkles size={16} className="text-amber-500" />
+                  <span>✨ Premium spots highlighted</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {restaurants.map((restaurant, index) => (
+                  <div
+                    key={restaurant._id || `${restaurant.name}-${index}`}
+                    className="group bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 overflow-hidden border border-gray-100"
+                  >
+                    {/* Image Header */}
+                    <div className="relative h-48 overflow-hidden">
+                      <Image
+                        src={
+                          restaurant.imageUrl ||
+                          `https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
+                            restaurant.name
+                          )}`
+                        }
+                        alt={restaurant.name}
+                        width={600}
+                        height={400}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        unoptimized
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = `https://placehold.co/600x400/CCE3F5/36454F?text=${encodeURIComponent(
+                            restaurant.name
+                          )}`;
+                        }}
+                      />
+
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+                      {/* Badges */}
+                      <div className="absolute top-4 left-4 flex gap-2">
+                        {restaurant.isFeatured && (
+                          <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
+                            <Sparkles size={12} />
+                            Featured
+                          </div>
+                        )}
+                        {favorites.has(restaurant._id) && (
+                          <div className="bg-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
+                            <Heart size={12} fill="currentColor" />
+                            Favorite
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="absolute top-4 right-4 flex gap-2">
+                        <button
+                          onClick={() => toggleFavorite(restaurant._id)}
+                          className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-xl hover:bg-white/30 transition-all hover:scale-110"
+                        >
+                          <Heart
+                            size={18}
+                            fill={favorites.has(restaurant._id) ? "currentColor" : "none"}
+                          />
+                        </button>
+                        <button className="bg-white/20 backdrop-blur-sm text-white p-2 rounded-xl hover:bg-white/30 transition-all hover:scale-110">
+                          <Link href="https://www.whatsapp.com">
+                          <Share2 size={18} />
+                          </Link>
+                        </button>
+                      </div>
+
+                      {/* Restaurant Info Overlay */}
+                      <div className="absolute bottom-4 left-4 right-4 text-white">
+                        <h3 className="text-xl font-bold mb-1">{restaurant.name}</h3>
+                        <p className="text-white/90 text-sm">{restaurant.cuisine}</p>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-6">
+                      {/* Rating and Price */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-full">
+                            <Star size={16} className="text-amber-500 fill-current" />
+                            <span className="font-bold text-gray-900">{restaurant.rating.toFixed(1)}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-gray-600">
+                            <DollarSign size={16} />
+                            <span className="font-semibold">{restaurant.priceRange}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Address */}
+                      <p className="text-gray-600 mb-4 flex items-start gap-2">
+                        <MapPin size={18} className="text-rose-500 mt-0.5 flex-shrink-0" />
+                        <span className="line-clamp-2">{restaurant.address}</span>
+                      </p>
+
+                      {/* Distance and Direction */}
+                      {restaurant.distance !== undefined && (userLocation || manualMapLocation) && (
+                        <div className="flex items-center justify-between mb-6 p-3 bg-gray-50 rounded-2xl">
+                          <div className="flex items-center gap-2 text-rose-600 font-semibold">
+                            <Navigation size={16} />
+                            <span>{restaurant.distance.toFixed(1)} km away</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-600 text-sm">
+                            <Compass size={16} />
+                            <span>
+                              {getDirection(
+                                userLocation?.latitude || manualMapLocation!.latitude,
+                                userLocation?.longitude || manualMapLocation!.longitude,
+                                restaurant.latitude,
+                                restaurant.longitude
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                        <NextLink
+                          href={{
+                            pathname: `/restaurants/${restaurant._id}`,
+                            query: {
+                              lat: (userLocation || manualMapLocation)?.latitude,
+                              lon: (userLocation || manualMapLocation)?.longitude,
+                            },
+                          }}
+                        >
+                          <button className="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2 rounded-lg transition duration-300 cursor-pointer ease-in-out">
+                            View Menu
+                          </button>
+                        </NextLink>
+
+                        {(userLocation || manualMapLocation) && (
+                          <a
+                            href={getDirectionsLink(restaurant) || '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 w-full inline-flex justify-center items-center bg-gray-200 hover:bg-rose-100 hover:text-rose-600 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out"
+                          >
+                            <MapPin size={18} className="mr-2" />
+                            Get Directions
+                          </a>
+                        )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </main>
 
