@@ -318,7 +318,7 @@ export default function ProfilePage() {
                                             {[
                                                 { label: "Full Name", name: "name", type: "text", icon: User, required: true },
                                                 { label: "Email Address", name: "email", type: "email", icon: Mail, required: true },
-                                                { label: "Phone Number", name: "phone", type: "tel", icon: Phone },
+                                                // { label: "Phone Number", name: "phone", type: "tel", icon: Phone },
                                                 { label: "Date of Birth", name: "dob", type: "date", icon: Calendar },
                                                 { label: "Address", name: "address", type: "text", icon: MapPin, fullWidth: true },
                                             ].map((field) => (
